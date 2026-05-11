@@ -55,6 +55,21 @@ export default function Settings() {
         <p className="text-xs text-muted-foreground">Customize your experience</p>
       </div>
 
+      {/* Profile */}
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <div className="w-4 h-4 flex items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold">M</div>
+          <h2 className="text-sm font-semibold">Profile</h2>
+        </div>
+        <div className="bg-card rounded-3xl p-5 border border-border shadow-sm flex items-center gap-4">
+           <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-lg">M</div>
+           <div>
+              <p className="font-bold">MMV User</p>
+              <p className="text-xs text-muted-foreground">mfozilbek9309@gmail.com</p>
+           </div>
+        </div>
+      </motion.section>
+
       {/* Appearance */}
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <div className="flex items-center gap-2 mb-3 px-1">

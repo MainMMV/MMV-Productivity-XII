@@ -89,12 +89,12 @@ export default function Home() {
       path: "/finance",
     },
     {
-      title: "Income",
-      value: formatCurrency(thisMonthIncome, settings.currency_primary, settings.uzs_rate),
-      sub: "This month",
-      icon: TrendingUp,
-      color: "from-emerald-400 to-teal-600",
-      path: "/finance",
+      title: "Goals",
+      value: goals.length,
+      sub: "Active goals",
+      icon: Target,
+      color: "from-blue-400 to-indigo-600",
+      path: "/goals",
     },
   ];
 
@@ -106,14 +106,13 @@ export default function Home() {
       {/* Header with Logo */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 20 }} className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-[10px] text-muted-foreground font-bold uppercase ">{format(new Date(), "EEEE, MMMM d")}</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase ">{format(new Date(), "EEEE, d MMMM yyyy")}</p>
           <h1 className="text-2xl font-bold text-foreground mt-0.5">{greeting()} 👋</h1>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-primary flex items-center justify-center rounded-2xl shadow-sm">
-            <span className="text-white font-poppins font-medium text-xl">M</span>
-          </div>
-          <span className="font-poppins font-medium text-xs hidden sm:block">MMV Productivity</span>
+          <button className="w-10 h-10 bg-card border border-border flex items-center justify-center rounded-2xl shadow-sm hover:bg-muted transition-colors">
+            <Bell className="w-5 h-5 text-muted-foreground" />
+          </button>
         </div>
       </motion.div>
 
@@ -162,57 +161,15 @@ export default function Home() {
         ))}
       </motion.div>
 
-      {/* Active Goals Preview */}
-      {goals.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-foreground">Active Goals</h2>
-            <Link to="/goals" className="text-xs text-primary font-medium">See all</Link>
-          </div>
-          <div className="space-y-2">
-            {goals.slice(0, 2).map(goal => {
-              const pct = goal.type === "savings" && goal.target_amount > 0
-                ? Math.min(100, Math.round(((goal.current_amount || 0) / goal.target_amount) * 100))
-                : goal.milestones?.length > 0
-                  ? Math.round((goal.milestones.filter((m: any) => m.completed).length / goal.milestones.length) * 100)
-                  : 0;
-              return (
-                <div key={goal.id} className="bg-card rounded-2xl p-4 border border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-semibold truncate">{goal.title}</p>
-                    <span className="text-xs text-primary font-semibold">{pct}%</span>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Upcoming Today Tasks */}
-      {dueTodayTasks.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mt-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-foreground">Due Today</h2>
-            <Link to="/tasks" className="text-xs text-primary font-medium">See all</Link>
-          </div>
-          <div className="space-y-2">
-            {dueTodayTasks.slice(0, 3).map(task => (
-              <div key={task.id} className="bg-card rounded-2xl px-4 py-3 border border-border flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${task.priority === "high" ? "bg-red-500" : task.priority === "medium" ? "bg-yellow-500" : "bg-green-500"}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{task.title}</p>
-                  {task.due_time && <p className="text-xs text-muted-foreground">{task.due_time}</p>}
-                </div>
-                {task.notification_enabled && <Bell className="w-3 h-3 text-primary flex-shrink-0" />}
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+      {/* Home Widgets */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-foreground">Upcoming</h2>
+        </div>
+        <div className="bg-card rounded-2xl p-4 border border-dashed border-border flex items-center justify-center text-muted-foreground text-xs">
+          No upcoming items
+        </div>
+      </motion.div>
     </div>
   );
 }
