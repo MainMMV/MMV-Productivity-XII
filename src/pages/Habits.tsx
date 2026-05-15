@@ -13,7 +13,7 @@ import DateRangePicker from "@/components/ui/DateRangePicker";
 import PullToRefresh from "@/components/common/PullToRefresh";
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#3b82f6"];
-const EMPTY_FORM = { title: "", color: "#8b5cf6", frequency: "daily", icon: "Star", description: "" };
+const EMPTY_FORM = { title: "", color: "#8b5cf6", frequency: "daily", icon: "Star", description: "", custom_days: [] as number[], notification_time: "" };
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } } };
@@ -41,7 +41,15 @@ export default function Habits() {
 
   function openEdit(habit: any) {
     setEditHabit(habit);
-    setForm({ title: habit.title, color: habit.color || "#8b5cf6", frequency: habit.frequency || "daily", icon: habit.icon || "Star", description: habit.description || "" });
+    setForm({ 
+      title: habit.title, 
+      color: habit.color || "#8b5cf6", 
+      frequency: habit.frequency || "daily", 
+      icon: habit.icon || "Star", 
+      description: habit.description || "",
+      custom_days: habit.custom_days || [],
+      notification_time: habit.notification_time || ""
+    });
     setShowForm(true);
   }
 
@@ -52,18 +60,24 @@ export default function Habits() {
     } else {
       await base44.entities.Habit.create({ ...form, completions: [], streak: 0, is_active: true });
     }
+    if (form.notification_time) {
+      const now = new Date();
+      const triggerTime = `${now.toISOString().split("T")[0]}T${form.notification_time}:00`;
+      scheduleNotification(form.title, "Habit reminder!", triggerTime);
+    }
     setShowForm(false);
     setEditHabit(null);
     setForm(EMPTY_FORM);
     loadHabits();
   }
 
-  async function toggleToday(habit: any) {
-    const today = new Date().toISOString().split("T")[0];
+  async function toggleToday(habit: any, date?: Date) {
+    const targetDate = date || new Date();
+    const dateStr = [targetDate.getFullYear(), String(targetDate.getMonth() + 1).padStart(2, '0'), String(targetDate.getDate()).padStart(2, '0')].join('-');
     const completions = habit.completions || [];
-    const newCompletions = completions.includes(today)
-      ? completions.filter((d: string) => d !== today)
-      : [...completions, today];
+    const newCompletions = completions.includes(dateStr)
+      ? completions.filter((d: string) => d !== dateStr)
+      : [...completions, dateStr];
     const streak = calculateStreak(newCompletions);
     await base44.entities.Habit.update(habit.id, { completions: newCompletions, streak });
     loadHabits();
@@ -89,9 +103,10 @@ export default function Habits() {
     loadHabits();
   }
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const targetDateForStats = dateRange?.from || new Date();
+  const targetDateStr = [targetDateForStats.getFullYear(), String(targetDateForStats.getMonth() + 1).padStart(2, '0'), String(targetDateForStats.getDate()).padStart(2, '0')].join('-');
   const filteredHabits = habits.filter(h => h.is_active);
-  const completedToday = filteredHabits.filter(h => h.completions?.includes(todayStr)).length;
+  const completedTargetDate = filteredHabits.filter(h => h.completions?.includes(targetDateStr)).length;
 
   return (
     <PullToRefresh onRefresh={loadHabits}>
@@ -100,9 +115,10 @@ export default function Habits() {
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">Habits</h1>
-          <p className="text-xs text-muted-foreground">{completedToday}/{filteredHabits.length} done today</p>
+          <p className="text-xs text-muted-foreground">{completedTargetDate}/{filteredHabits.length} done {dateRange?.from ? "on selected date" : "today"}</p>
         </div>
         <div className="flex items-center gap-2">
+          <DateRangePicker variant="icon" value={dateRange} onChange={setDateRange} />
           <Button variant="ghost" size="icon" onClick={() => setView(v => v === "matrix" ? "list" : "matrix")} className="rounded-xl">
             {view === "matrix" ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
           </Button>
@@ -112,16 +128,11 @@ export default function Habits() {
         </div>
       </motion.div>
 
-      {/* Date filter */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }} className="mb-4">
-        <DateRangePicker value={dateRange} onChange={setDateRange} placeholder="Filter by date range" />
-      </motion.div>
-
       {/* Stats row */}
       <motion.div variants={container} initial="hidden" animate="show" className="flex gap-3 mb-5">
         {[
           { label: "Active", value: filteredHabits.length, color: "text-primary" },
-          { label: "Done Today", value: completedToday, color: "text-emerald-500" },
+          { label: dateRange?.from ? "Done Date" : "Done Today", value: completedTargetDate, color: "text-emerald-500" },
           { label: "Best Streak", value: Math.max(0, ...filteredHabits.map(h => h.streak || 0)), color: "text-orange-500" },
         ].map(s => (
           <motion.div key={s.label} variants={item} className="flex-1 min-w-[80px] bg-card rounded-2xl p-3 border border-border text-center">
@@ -138,12 +149,46 @@ export default function Habits() {
             <HabitMatrix habits={filteredHabits} onToggle={toggleToday} dateRange={dateRange} />
           </motion.div>
         ) : (
-          <motion.div key="list" variants={container} initial="hidden" animate="show" className="space-y-3">
-            {filteredHabits.map(habit => (
-              <motion.div key={habit.id} variants={item}>
-                <HabitCard habit={habit} onToggle={toggleToday} onDelete={deleteHabit} onEdit={openEdit} />
-              </motion.div>
-            ))}
+          <motion.div key="list" variants={container} initial="hidden" animate="show" className="space-y-6">
+            {(() => {
+              if (dateRange?.from) {
+                const dates = [];
+                let curr = new Date(dateRange.from);
+                const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+                
+                while (curr <= end) {
+                  dates.push(new Date(curr));
+                  curr.setDate(curr.getDate() + 1);
+                }
+
+                return dates.map(date => (
+                  <div key={date.toISOString()} className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <div className="h-px bg-border flex-1" />
+                      <p className="text-xs font-bold text-muted-foreground uppercase">{date.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                      <div className="h-px bg-border flex-1" />
+                    </div>
+                    {filteredHabits.map(habit => (
+                      <motion.div key={`${habit.id}-${date.toISOString()}`} variants={item}>
+                        <HabitCard habit={habit} onToggle={toggleToday} onDelete={deleteHabit} onEdit={openEdit} targetDate={date} />
+                      </motion.div>
+                    ))}
+                  </div>
+                ));
+              }
+
+              // Default view without date range filtering
+              const defaultDate = new Date();
+              return (
+                <div className="space-y-3">
+                  {filteredHabits.map(habit => (
+                    <motion.div key={habit.id} variants={item}>
+                      <HabitCard habit={habit} onToggle={toggleToday} onDelete={deleteHabit} onEdit={openEdit} targetDate={defaultDate} />
+                    </motion.div>
+                  ))}
+                </div>
+              );
+            })()}
           </motion.div>
         )}
       </AnimatePresence>
@@ -181,9 +226,43 @@ export default function Habits() {
                 <SelectContent>
                   <SelectItem value="daily">Daily</SelectItem>
                   <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
+                  <SelectItem value="custom">Custom days</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {form.frequency === "custom" && (
+              <div className="space-y-2">
+                <Label className="text-xs">Select Days</Label>
+                <div className="flex justify-between gap-1">
+                  {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => {
+                    const isSelected = form.custom_days.includes(i);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          const next = isSelected 
+                            ? form.custom_days.filter(d => d !== i)
+                            : [...form.custom_days, i];
+                          setForm(f => ({ ...f, custom_days: next }));
+                        }}
+                        className={`w-8 h-8 rounded-lg text-[10px] font-bold transition-all ${
+                          isSelected 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <Label>Reminder Time</Label>
+              <Input type="time" value={form.notification_time} onChange={e => setForm(f => ({ ...f, notification_time: e.target.value }))} className="rounded-xl mt-1" />
             </div>
             <div>
               <Label>Color</Label>

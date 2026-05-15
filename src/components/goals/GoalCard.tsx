@@ -29,22 +29,22 @@ export default function GoalCard({
       : 0;
 
   return (
-    <div className={`bg-card rounded-3xl border border-border overflow-hidden relative ${isCompleted ? "opacity-75 grayscale-[0.5]" : ""}`}>
+    <div className={`bg-card rounded-3xl border border-border overflow-hidden relative transition-all hover:bg-primary/5 hover:border-primary/20 group ${isCompleted ? "opacity-75 grayscale-[0.5]" : ""}`}>
       {/* Cover Image */}
       {goal.image_url ? (
         <div className="h-24 w-full relative">
-          <img src={goal.image_url} alt={goal.title} className="w-full h-full object-cover" />
+          <img src={goal.image_url} alt={goal.title} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
         </div>
       ) : (
-        <div className="h-2 w-full" style={{ backgroundColor: goal.color || "hsl(var(--primary))" }} />
+        <div className="h-2 w-full transition-opacity group-hover:opacity-80" style={{ backgroundColor: goal.color || "hsl(var(--primary))" }} />
       )}
 
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0" onClick={() => onEdit(goal)}>
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onEdit(goal)}>
             <div className="flex items-center gap-2">
-              <h3 className={`font-bold text-lg leading-tight truncate ${isCompleted ? "line-through text-muted-foreground" : ""}`}>
+              <h3 className={`font-bold text-lg leading-tight truncate group-hover:text-primary transition-colors ${isCompleted ? "line-through text-muted-foreground group-hover:text-primary/70" : ""}`}>
                 {goal.title}
               </h3>
               {isCompleted && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
@@ -105,16 +105,16 @@ export default function GoalCard({
         ) : (
           <div className="space-y-2">
             {goal.milestones?.map((m: any, idx: number) => (
-              <div 
-                key={idx} 
-                className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl border border-border/50 active:scale-[0.99] transition-transform"
-                onClick={() => onToggleMilestone(goal, idx)}
-              >
-                <Checkbox checked={m.completed} />
-                <span className={`text-xs font-medium ${m.completed ? "line-through text-muted-foreground" : ""}`}>
-                  {m.title}
-                </span>
-              </div>
+                <div 
+                  key={idx} 
+                  className="flex items-center gap-3 p-3 bg-muted/30 rounded-2xl border border-border/50 active:scale-[0.99] transition-all hover:bg-primary/5 hover:border-primary/20 group/milestone cursor-pointer"
+                  onClick={() => onToggleMilestone(goal, idx)}
+                >
+                  <Checkbox checked={m.completed} className="group-hover/milestone:border-primary" />
+                  <span className={`text-xs font-medium transition-colors ${m.completed ? "line-through text-muted-foreground" : "group-hover/milestone:text-primary"}`}>
+                    {m.title}
+                  </span>
+                </div>
             ))}
             <Button 
               variant="secondary" 

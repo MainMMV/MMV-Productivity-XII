@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface HabitMatrixProps {
   habits: any[];
-  onToggle: (habit: any) => void;
+  onToggle: (habit: any, date?: Date) => void;
   dateRange: any;
 }
 
@@ -15,7 +15,7 @@ export default function HabitMatrix({ habits, onToggle, dateRange }: HabitMatrix
   });
 
   return (
-    <div className="bg-card rounded-3xl p-4 border border-border overflow-x-auto">
+    <div className="bg-card rounded-3xl p-4 border border-border overflow-x-auto scrollbar-none">
       <div className="min-w-max">
         <div className="flex mb-3">
           <div className="w-24 flex-shrink-0" />
@@ -45,7 +45,7 @@ export default function HabitMatrix({ habits, onToggle, dateRange }: HabitMatrix
                           <TooltipTrigger asChild>
                             <motion.button
                               whileTap={{ scale: 0.8 }}
-                              onClick={() => isToday && onToggle(habit)}
+                              onClick={() => onToggle(habit, day)}
                               className={`w-5 h-5 rounded-md transition-all duration-300 ${
                                 isCompleted 
                                   ? "shadow-sm" 
@@ -54,7 +54,7 @@ export default function HabitMatrix({ habits, onToggle, dateRange }: HabitMatrix
                               style={{ 
                                 backgroundColor: isCompleted ? habit.color || "hsl(var(--primary))" : undefined,
                                 opacity: isToday ? 1 : 0.6,
-                                cursor: isToday ? "pointer" : "default"
+                                cursor: "pointer"
                               }}
                             />
                           </TooltipTrigger>

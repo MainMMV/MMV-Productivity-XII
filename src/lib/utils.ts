@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatCurrency(amount: number, currency = "USD", uzsRate = 12700) {
   if (!amount && amount !== 0) return "-";
   if (currency === "UZS") {
-    return new Intl.NumberFormat("uz-UZ", { style: "currency", currency: "UZS", maximumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "UZS", maximumFractionDigits: 0 }).format(amount);
   }
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 }

@@ -1,8 +1,9 @@
-import { Trash2, CreditCard, Check, X } from "lucide-react";
+import { Trash2, CreditCard, Check, X, MoreHorizontal } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { base44 } from "@/api/base44Client";
 import { Switch } from "@/components/ui/switch";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface SubscriptionListProps {
   subscriptions: any[];
@@ -31,27 +32,39 @@ export default function SubscriptionList({ subscriptions, onRefresh, settings }:
             animate={{ opacity: 1, y: 0 }} 
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ delay: i * 0.05 }}
-            className={`bg-card rounded-2xl p-4 border border-border flex items-center gap-3 ${!sub.is_active ? "opacity-50 grayscale" : ""}`}
+            className={`bg-card rounded-2xl p-4 border border-border flex items-center gap-3 transition-all hover:bg-primary/5 hover:border-primary/20 group ${!sub.is_active ? "opacity-50 grayscale hover:grayscale-0" : ""}`}
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">
               <CreditCard className="w-5 h-5 text-blue-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate">{sub.title}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">{sub.billing_cycle || "Monthly"}</p>
+              <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{sub.title}</p>
+              <p className="text-[10px] text-muted-foreground uppercase">
+                {sub.billing_cycle || "Monthly"}
+                {sub.next_billing && ` • Next: ${new Date(sub.next_billing).toLocaleDateString("en-US")}`}
+              </p>
             </div>
             <div className="text-right flex items-center gap-4">
               <div>
-                <p className="text-sm font-bold">
+                <p className="text-sm font-bold text-foreground">
                   {formatCurrency(sub.amount, settings.currency_primary, settings.uzs_rate)}
                 </p>
-                <div className="flex justify-end gap-1 mt-1">
-                  <button onClick={() => remove(sub.id)} className="p-0.5 text-muted-foreground hover:text-destructive">
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
               </div>
-              <Switch checked={sub.is_active} onCheckedChange={() => toggle(sub)} />
+              <div className="flex items-center gap-2">
+                <Switch checked={sub.is_active} onCheckedChange={() => toggle(sub)} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-1.5 rounded-xl hover:bg-primary/10 text-muted-foreground transition-all">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-2xl">
+                    <DropdownMenuItem onClick={() => remove(sub.id)} className="gap-2 text-destructive focus:text-destructive rounded-xl">
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </motion.div>
         ))}

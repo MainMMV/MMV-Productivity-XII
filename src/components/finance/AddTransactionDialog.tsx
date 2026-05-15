@@ -24,7 +24,9 @@ export default function AddTransactionDialog({ open, onClose, type, onSaved, set
     category: "General",
     source: "Pocket",
     billing_cycle: "monthly",
-    currency: settings.currency_primary || "USD"
+    currency: settings.currency_primary || "USD",
+    next_billing: getToday(),
+    reminder_time: ""
   });
 
   async function handleSave() {
@@ -112,17 +114,29 @@ export default function AddTransactionDialog({ open, onClose, type, onSaved, set
             </div>
           )}
           {type === 'subscription' && (
-            <div>
-              <Label>Cycle</Label>
-              <Select value={form.billing_cycle} onValueChange={v => setForm(f => ({ ...f, billing_cycle: v }))}>
-                <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              <div>
+                <Label>Cycle</Label>
+                <Select value={form.billing_cycle} onValueChange={v => setForm(f => ({ ...f, billing_cycle: v }))}>
+                  <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Next Billing</Label>
+                  <Input type="date" value={form.next_billing} onChange={e => setForm(f => ({ ...f, next_billing: e.target.value }))} className="rounded-xl mt-1" />
+                </div>
+                <div>
+                  <Label>Reminder Time</Label>
+                  <Input type="time" value={form.reminder_time} onChange={e => setForm(f => ({ ...f, reminder_time: e.target.value }))} className="rounded-xl mt-1" />
+                </div>
+              </div>
+            </>
           )}
           <Button onClick={handleSave} disabled={loading} className="w-full rounded-xl">
             {loading ? "Saving..." : "Save Transaction"}

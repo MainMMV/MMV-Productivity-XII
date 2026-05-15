@@ -43,17 +43,18 @@ export default function AppLayout() {
             const Icon = item.icon;
             return (
               <li key={item.path}>
-                <Link to={item.path} className="flex flex-col items-center gap-1 p-2 relative">
+                <Link to={item.path} className="flex flex-col items-center gap-1 p-2 relative group rounded-xl hover:bg-primary/5 transition-all">
                   <motion.div
                     animate={{ 
                       scale: isActive ? 1.1 : 1,
                       color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'
                     }}
                     transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                    className="group-hover:text-primary transition-colors"
                   >
                     <Icon className="w-5 h-5" />
                   </motion.div>
-                  <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                  <span className={`text-[10px] font-medium transition-colors group-hover:text-primary ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                     {item.label}
                   </span>
                   {isActive && (

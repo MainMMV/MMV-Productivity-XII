@@ -21,8 +21,10 @@ export default function Home() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [income, setIncome] = useState<any[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const { settings } = useSettings();
   const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0];
   const quote = QUOTES[new Date().getDay() % QUOTES.length];
 
   useEffect(() => {
@@ -32,14 +34,22 @@ export default function Home() {
       base44.entities.Expense.list("-date", 50),
       base44.entities.Income.list("-date", 50),
       base44.entities.Goal.filter({ status: "active" }),
-    ]).then(([h, t, e, i, g]) => {
+      base44.entities.Subscription.list(),
+    ]).then(([h, t, e, i, g, s]) => {
       setHabits(h || []);
       setTasks(t || []);
       setExpenses(e || []);
       setIncome(i || []);
       setGoals(g || []);
+      setSubscriptions(s || []);
     });
   }, []);
+
+  const isHabitDueOnDate = (habit: any, date: Date) => {
+    if (habit.frequency === "daily") return true;
+    if (habit.frequency === "custom" && habit.custom_days?.includes(date.getDay())) return true;
+    return false;
+  };
 
   const todayHabits = habits.filter(h => h.is_active);
   const completedTodayCount = todayHabits.filter(h => h.completions?.includes(today)).length;
@@ -47,6 +57,15 @@ export default function Home() {
 
   const dueTodayTasks = tasks.filter(t => t.due_date === today);
   const overdueTaskCount = tasks.filter(t => t.due_date && t.due_date < today).length;
+
+  const upcomingItems = [
+    ...habits.filter(h => h.is_active && !h.completions?.includes(today) && isHabitDueOnDate(h, new Date())).map(h => ({ ...h, type: 'habit', dateLabel: 'Today' })),
+    ...tasks.filter(t => t.due_date === today).map(t => ({ ...t, type: 'task', dateLabel: 'Today' })),
+    ...subscriptions.filter(s => s.is_active && s.next_billing === today).map(s => ({ ...s, type: 'subscription', dateLabel: 'Today' })),
+    ...habits.filter(h => h.is_active && isHabitDueOnDate(h, new Date(new Date().setDate(new Date().getDate() + 1)))).map(h => ({ ...h, type: 'habit', dateLabel: 'Tomorrow' })),
+    ...tasks.filter(t => t.due_date === tomorrow).map(t => ({ ...t, type: 'task', dateLabel: 'Tomorrow' })),
+    ...subscriptions.filter(s => s.is_active && s.next_billing === tomorrow).map(s => ({ ...s, type: 'subscription', dateLabel: 'Tomorrow' })),
+  ];
 
   const thisMonthExpenses = expenses
     .filter(e => e.date?.startsWith(today.slice(0, 7)))
@@ -110,15 +129,15 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-foreground mt-0.5">{greeting()} 👋</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 bg-card border border-border flex items-center justify-center rounded-2xl shadow-sm hover:bg-muted transition-colors">
-            <Bell className="w-5 h-5 text-muted-foreground" />
+          <button className="w-10 h-10 bg-card border border-border flex items-center justify-center rounded-2xl shadow-sm hover:bg-primary/10 group transition-colors">
+            <Bell className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
           </button>
         </div>
       </motion.div>
 
       {/* Habit Score Card */}
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}
-        className="bg-card rounded-3xl p-5 mb-4 border border-border transition-all active:scale-[0.99]">
+        className="bg-card rounded-3xl p-5 mb-4 border border-border transition-all active:scale-[0.99] hover:bg-primary/5 hover:border-primary/20 group">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase ">Daily Habit Score</p>
@@ -133,12 +152,12 @@ export default function Home() {
                 strokeDashoffset={`${2 * Math.PI * 32 * (1 - habitPct / 100)}`}
                 strokeLinecap="round" className="transition-all duration-700" />
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Flame className="w-6 h-6 text-primary" />
             </div>
           </div>
         </div>
-        <Link to="/habits" className="mt-4 flex items-center text-xs font-bold text-primary gap-1">
+        <Link to="/habits" className="mt-4 flex items-center text-xs font-bold text-primary gap-1 group-hover:translate-x-1 transition-transform inline-flex">
           View All Habits <ChevronRight className="w-3 h-3" />
         </Link>
       </motion.div>
@@ -148,11 +167,11 @@ export default function Home() {
         {widgets.map((w) => (
           <motion.div key={w.title} variants={itemAnim}>
             <Link to={w.path}>
-              <div className="bg-card rounded-2xl p-4 border border-border active:scale-95 transition-transform h-full">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 fill-white ${w.title.includes('Expense') || w.title.includes('Spending') ? 'bg-rose-500' : w.title.includes('Income') ? 'bg-emerald-500' : w.title.includes('Habits') ? 'bg-orange-500' : 'bg-primary'}`}>
+              <div className="bg-card rounded-2xl p-4 border border-border active:scale-95 hover:bg-primary/5 hover:border-primary/20 transition-all h-full group">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 fill-white transition-transform group-hover:scale-110 group-hover:rotate-3 ${w.title.includes('Expense') || w.title.includes('Spending') ? 'bg-rose-500' : w.title.includes('Income') ? 'bg-emerald-500' : w.title.includes('Habits') ? 'bg-orange-500' : 'bg-primary'}`}>
                   <w.icon className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-lg font-bold text-foreground leading-tight">{w.value}</p>
+                <p className="text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{w.value}</p>
                 <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1 ">{w.title}</p>
                 <p className="text-[10px] text-muted-foreground/70 mt-0.5">{w.sub}</p>
               </div>
@@ -161,13 +180,42 @@ export default function Home() {
         ))}
       </motion.div>
 
-      {/* Home Widgets */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6">
+      {/* Upcoming Items List */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-8">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-foreground">Upcoming</h2>
+          {upcomingItems.length > 0 && <span className="text-[10px] font-bold text-primary uppercase">{upcomingItems.length} items</span>}
         </div>
-        <div className="bg-card rounded-2xl p-4 border border-dashed border-border flex items-center justify-center text-muted-foreground text-xs">
-          No upcoming items
+        <div className="space-y-2">
+          {upcomingItems.length > 0 ? upcomingItems.map((item, idx) => (
+            <motion.div key={`${item.type}-${item.id || idx}-${item.dateLabel}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + idx * 0.05 }}
+              className="bg-card rounded-2xl p-3 border border-border flex items-center gap-3 hover:bg-primary/5 transition-colors group">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center fill-white ${
+                item.type === 'habit' ? 'bg-orange-500' : 
+                item.type === 'task' ? 'bg-primary' : 
+                'bg-rose-500'}`}
+              >
+                {item.type === 'habit' ? <Flame className="w-4 h-4 text-white" /> : 
+                 item.type === 'task' ? <CheckCircle className="w-4 h-4 text-white" /> : 
+                 <TrendingDown className="w-4 h-4 text-white" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{item.title}</p>
+                <p className="text-[10px] text-muted-foreground uppercase ">{item.dateLabel} • {item.type}</p>
+              </div>
+              {item.type === 'subscription' && (
+                <p className="text-xs font-bold text-rose-500">-{formatCurrency(item.amount, settings.currency_primary, settings.uzs_rate)}</p>
+              )}
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+            </motion.div>
+          )) : (
+            <div className="bg-card/50 rounded-2xl p-6 border border-dashed border-border flex flex-col items-center justify-center text-center">
+              <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center mb-2">
+                <CheckCircle className="w-5 h-5 text-muted-foreground/40" />
+              </div>
+              <p className="text-xs font-medium text-muted-foreground">All caught up for today & tomorrow</p>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>

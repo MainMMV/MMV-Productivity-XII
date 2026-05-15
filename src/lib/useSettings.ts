@@ -11,13 +11,15 @@ const DEFAULT_SETTINGS = {
   notifications_enabled: true,
   tasks_notifications: true,
   habits_notifications: true,
-  uzs_rate: 12700,
+  first_name: "MMV",
+  last_name: "User",
 };
 
 export function useSettings() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -30,7 +32,7 @@ export function useSettings() {
     document.documentElement.style.setProperty("--chart-1", `${settings.theme_hue} 90% 66%`);
     
     // Border radius: 50% = 1rem (base), 0% = 0rem, 100% = 2rem
-    const radiusVal = typeof settings.border_radius_percentage !== 'undefined' ? settings.border_radius_percentage : 50;
+    const radiusVal = typeof settings.border_radius_percentage !== 'undefined' ? settings.border_radius_percentage : 35;
     const radiusRem = (radiusVal / 50) * 1;
     document.documentElement.style.setProperty("--radius", `${radiusRem}rem`);
   }, [settings.theme_hue, settings.border_radius_percentage]);
@@ -57,7 +59,8 @@ export function useSettings() {
 
   async function loadSettings() {
     try {
-      const list = await base44.entities.UserSettings.list();
+      const me = await base44.auth.me();
+      const list = await base44.entities.UserSettings.filter({ userId: me.id });
       if (list && list.length > 0) {
         setSettings({ ...DEFAULT_SETTINGS, ...list[0] });
         setSettingsId(list[0].id);
@@ -69,20 +72,29 @@ export function useSettings() {
     }
   }
 
-  async function updateSettings(updates: any) {
-    const newSettings = { ...settings, ...updates };
-    setSettings(newSettings);
+  function updateSettings(updates: any) {
+    setSettings(prev => ({ ...prev, ...updates }));
+    setHasChanges(true);
+  }
+
+  async function saveSettings() {
     try {
+      setLoading(true);
+      const me = await base44.auth.me();
+      const payload = { ...settings, userId: me.id };
       if (settingsId) {
-        await base44.entities.UserSettings.update(settingsId, updates);
+        await base44.entities.UserSettings.update(settingsId, payload);
       } else {
-        const created = await base44.entities.UserSettings.create(newSettings);
+        const created = await base44.entities.UserSettings.create(payload);
         setSettingsId(created.id);
       }
+      setHasChanges(false);
     } catch (e) {
       console.error("Failed to save settings", e);
+    } finally {
+      setLoading(false);
     }
   }
 
-  return { settings, updateSettings, loading };
+  return { settings, updateSettings, saveSettings, hasChanges, loading };
 }

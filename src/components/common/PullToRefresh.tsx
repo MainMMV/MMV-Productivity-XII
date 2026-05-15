@@ -45,7 +45,7 @@ export default function PullToRefresh({ onRefresh, children }: PullToRefreshProp
 
   return (
     <div 
-      className="relative w-full h-full overflow-y-auto"
+      className="relative w-full h-full overflow-y-auto scrollbar-none"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

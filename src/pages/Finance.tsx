@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ExpenseList from "@/components/finance/ExpenseList";
 import IncomeList from "@/components/finance/IncomeList";
@@ -74,19 +75,31 @@ export default function Finance() {
           <h1 className="text-2xl font-bold text-foreground">Finance</h1>
           <p className="text-xs text-muted-foreground">Track your money flow</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => openAdd("expense")} className="rounded-xl text-xs h-9">
-            <TrendingDown className="w-3 h-3 mr-1" /> Expense
-          </Button>
-          <Button size="sm" onClick={() => openAdd("income")} className="rounded-xl text-xs h-9">
-            <TrendingUp className="w-3 h-3 mr-1" /> Income
-          </Button>
+        <div className="flex items-center gap-2">
+          <DateRangePicker variant="icon" value={dateRange} onChange={setDateRange} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" className="rounded-xl shadow-lg">
+                <Plus className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-2xl">
+              <DropdownMenuItem onClick={() => openAdd("expense")} className="gap-2 rounded-xl">
+                <TrendingDown className="w-4 h-4 text-rose-500" /> 
+                <span className="font-medium">Add Expense</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openAdd("income")} className="gap-2 rounded-xl">
+                <TrendingUp className="w-4 h-4 text-emerald-500" /> 
+                <span className="font-medium">Add Income</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openAdd("subscription")} className="gap-2 rounded-xl">
+                <Plus className="w-4 h-4 text-primary" /> 
+                <span className="font-medium">Add Subscription</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </motion.div>
-
-      <div className="mb-4">
-        <DateRangePicker value={dateRange} onChange={setDateRange} placeholder="Filter by date range" />
-      </div>
 
       {/* Balance Card */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -94,7 +107,7 @@ export default function Finance() {
         <p className="text-[10px] opacity-80 font-bold uppercase ">Net Balance</p>
         <p className="text-3xl font-bold mt-1 leading-none">{formatCurrency(Math.abs(balance), cur, rate)}</p>
         <p className="text-[10px] opacity-70 mt-2 font-medium">{balance >= 0 ? "Positive balance" : "Spending exceeds income"}</p>
-        <div className="flex gap-4 mt-6 pt-6 border-t border-white/10 overflow-x-auto">
+        <div className="flex gap-4 mt-6 pt-6 border-t border-white/10 overflow-x-auto scrollbar-none">
           <div>
             <p className="text-[10px] opacity-70 uppercase font-bold ">Income</p>
             <p className="text-sm font-bold">{formatCurrency(totalIncome, cur, rate)}</p>
@@ -125,10 +138,10 @@ export default function Finance() {
           <FinanceSummary expenses={filteredExpenses} income={filteredIncome} settings={settings} />
         </TabsContent>
         <TabsContent value="expenses">
-          <ExpenseList expenses={filteredExpenses} onRefresh={loadAll} settings={settings} />
+          <ExpenseList expenses={filteredExpenses} onRefresh={loadAll} settings={settings} dateRange={dateRange} />
         </TabsContent>
         <TabsContent value="income">
-          <IncomeList income={filteredIncome} onRefresh={loadAll} settings={settings} />
+          <IncomeList income={filteredIncome} onRefresh={loadAll} settings={settings} dateRange={dateRange} />
         </TabsContent>
         <TabsContent value="subscriptions">
           <SubscriptionList subscriptions={subscriptions} onRefresh={loadAll} settings={settings} />

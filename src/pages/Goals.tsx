@@ -176,7 +176,7 @@ export default function Goals() {
 
       {/* Goal Form Dialog */}
       <Dialog open={showForm} onOpenChange={v => { setShowForm(v); if (!v) setEditGoal(null); }}>
-        <DialogContent className="rounded-3xl mx-auto max-w-sm w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="rounded-3xl mx-auto max-w-sm w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto scrollbar-none">
           <DialogHeader>
             <DialogTitle>{editGoal ? "Edit Goal" : "New Goal"}</DialogTitle>
           </DialogHeader>

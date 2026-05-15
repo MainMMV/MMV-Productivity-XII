@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "UserSettings": {
+      "title": "User Settings",
+      "description": "Configuration and profile details for individual users",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner of the settings" },
+        "currency_primary": { "type": "string", "enum": ["USD", "UZS"] },
+        "currency_secondary": { "type": "string", "enum": ["USD", "UZS"] },
+        "theme_hue": { "type": "integer" },
+        "theme_mode": { "type": "string", "enum": ["light", "dark", "system"] },
+        "border_radius_percentage": { "type": "integer" },
+        "uzs_rate": { "type": "number" },
+        "notifications_enabled": { "type": "boolean" },
+        "tasks_notifications": { "type": "boolean" },
+        "habits_notifications": { "type": "boolean" },
+        "first_name": { "type": "string" },
+        "last_name": { "type": "string" }
+      },
+      "required": ["userId"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "User habit tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "frequency": { "type": "string" }
+      }
+    },
+    "Task": {
+      "title": "Task",
+      "description": "User tasks",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "due_date": { "type": "string" },
+        "priority": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/userSettings/{settingsId}": {
+      "schema": "UserSettings",
+      "description": "User configuration storage"
+    }
+  }
+}
