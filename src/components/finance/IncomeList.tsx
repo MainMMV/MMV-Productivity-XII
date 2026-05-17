@@ -35,7 +35,7 @@ export default function IncomeList({ income, onRefresh, settings, dateRange }: I
       </div>
       <div className="text-right flex items-center gap-2">
         <p className="text-sm font-bold text-emerald-500">
-          +{formatCurrency(item.amount_usd || item.amount, settings.currency_primary, settings.uzs_rate)}
+          +{formatCurrency(item.amount, settings.currency_primary, settings.uzs_rate, item.currency)}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -41,17 +41,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error: any) {
-      console.error('User auth check failed:', error);
+      console.warn('User auth check failed:', error);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
+      // Removed the logic that sets authError here, because we want the app 
+      // to continue running even if the user is not authenticated.
+      // We are just unauthenticated now and let local storage take over.
     }
   };
 

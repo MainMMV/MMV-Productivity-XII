@@ -57,10 +57,17 @@ export default function Finance() {
   const filteredExpenses = filterByDate(expenses);
   const filteredIncome = filterByDate(income);
 
-  const totalExpenses = filteredExpenses.reduce((s, e) => s + (e.amount_usd || e.amount || 0), 0);
-  const totalIncome = filteredIncome.reduce((s, i) => s + (i.amount_usd || i.amount || 0), 0);
+  const getAmountInPrimary = (item: any) => {
+    let amt = item.amount || 0;
+    if (item.currency === 'USD' && settings.currency_primary === 'UZS') amt *= settings.uzs_rate;
+    if (item.currency === 'UZS' && settings.currency_primary === 'USD') amt /= settings.uzs_rate;
+    return amt;
+  };
+
+  const totalExpenses = filteredExpenses.reduce((s, e) => s + getAmountInPrimary(e), 0);
+  const totalIncome = filteredIncome.reduce((s, i) => s + getAmountInPrimary(i), 0);
   const balance = totalIncome - totalExpenses;
-  const monthlySubscriptions = subscriptions.filter(s => s.is_active && s.billing_cycle === "monthly").reduce((sum, s) => sum + (s.amount || 0), 0);
+  const monthlySubscriptions = subscriptions.filter(s => s.is_active && s.billing_cycle === "monthly").reduce((sum, s) => sum + getAmountInPrimary(s), 0);
 
   function openAdd(type: string) {
     setAddType(type);

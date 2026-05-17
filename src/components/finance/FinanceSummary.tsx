@@ -8,10 +8,17 @@ interface FinanceSummaryProps {
 }
 
 export default function FinanceSummary({ expenses, income, settings }: FinanceSummaryProps) {
+  const getAmountInPrimary = (item: any) => {
+    let amt = item.amount || 0;
+    if (item.currency === 'USD' && settings.currency_primary === 'UZS') amt *= settings.uzs_rate;
+    if (item.currency === 'UZS' && settings.currency_primary === 'USD') amt /= settings.uzs_rate;
+    return amt;
+  };
+
   const categoryTotals: Record<string, number> = {};
   expenses.forEach(e => {
     const cat = e.category || "General";
-    categoryTotals[cat] = (categoryTotals[cat] || 0) + (e.amount_usd || e.amount || 0);
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + getAmountInPrimary(e);
   });
 
   const chartData = Object.keys(categoryTotals).map(cat => ({

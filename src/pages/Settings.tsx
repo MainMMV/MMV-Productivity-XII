@@ -13,7 +13,8 @@ import {
   Save, 
   Check, 
   Eye, 
-  EyeOff 
+  EyeOff,
+  LogOut
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/lib/useSettings";
 import { toast } from "react-hot-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/AuthContext";
 
 const ALL_HUES = [
   { label: "Red", hue: 0, color: "#ef4444" },
@@ -40,15 +43,17 @@ const ALL_HUES = [
 
 export default function Settings() {
   const { settings, updateSettings, saveSettings, hasChanges, loading } = useSettings();
+  const { isAuthenticated, user, logout } = useAuth();
+  
   const [uzsInput, setUzsInput] = useState("");
-  const [localPassword, setLocalPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Auth state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authMsg, setAuthMsg] = useState("");
   
+  const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -69,6 +74,47 @@ export default function Settings() {
     toast.success("Settings saved successfully!");
   };
 
+  const handleAuth = async (isSignUp: boolean) => {
+    setAuthLoading(true);
+    setAuthMsg("");
+    try {
+      if (isSignUp) {
+         // Check user limits
+         const { data: count, error: countErr } = await supabase.rpc('get_user_count');
+         if (!countErr && (count as number) >= 3) {
+            throw new Error("Registration limit reached. Maximum of 3 users allowed.");
+         }
+         
+         const { error } = await supabase.auth.signUp({ email, password });
+         if (error) throw error;
+         setAuthMsg("Check your email to confirm registration");
+      } else {
+         const { error } = await supabase.auth.signInWithPassword({ email, password });
+         if (error) throw error;
+         toast.success("Logged in successfully!");
+         setTimeout(() => window.location.reload(), 1000);
+      }
+    } catch (err: any) {
+      setAuthMsg(err.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      const { data: count, error: countErr } = await supabase.rpc('get_user_count');
+      if (!countErr && (count as number) >= 3) {
+         toast.error("Registration limit reached. Maximum of 3 users allowed.");
+         return;
+      }
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   if (loading && !isSaving) return <div className="flex items-center justify-center min-h-[60dvh]"><div className="w-10 h-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>;
 
   return (
@@ -78,103 +124,86 @@ export default function Settings() {
         <p className="text-xs text-muted-foreground">Customize your experience</p>
       </div>
 
-      {/* Profile Section */}
+      {/* Auth Section */}
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <div className="flex items-center gap-2 mb-3 px-1">
           <User className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Personal Profile</h2>
+          <h2 className="text-sm font-semibold">Account</h2>
         </div>
         <div className="bg-card rounded-3xl p-5 border border-border shadow-sm space-y-4">
-           <div className="flex items-center gap-4 mb-2">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-bold text-xl border border-primary/20">
-                {(settings.first_name?.[0] || "M")}{(settings.last_name?.[0] || "")}
-              </div>
-              <div>
-                 <p className="font-bold text-lg">{settings.first_name} {settings.last_name}</p>
-                 <p className="text-xs text-muted-foreground">mfozilbek9309@gmail.com</p>
-              </div>
-           </div>
-           
-           <div className="grid grid-cols-2 gap-3">
-             <div className="space-y-1.5">
-               <Label className="text-[10px] uppercase font-bold text-muted-foreground">First Name</Label>
-               <Input 
-                 value={settings.first_name || ""} 
-                 onChange={e => updateSettings({ first_name: e.target.value })}
-                 className="rounded-xl h-10 text-sm focus-visible:ring-primary"
-                 placeholder="First Name"
-               />
-             </div>
-             <div className="space-y-1.5">
-               <Label className="text-[10px] uppercase font-bold text-muted-foreground">Last Name</Label>
-               <Input 
-                 value={settings.last_name || ""} 
-                 onChange={e => updateSettings({ last_name: e.target.value })}
-                 className="rounded-xl h-10 text-sm focus-visible:ring-primary"
-                 placeholder="Last Name"
-               />
-             </div>
-           </div>
-
-           <div className="pt-4 border-t border-border mt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-bold">Change Password</span>
-              </div>
-              <div className="space-y-3">
-                <div className="relative">
+          {isAuthenticated ? (
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-bold text-xl border border-primary/20">
+                    <User className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full mb-1 inline-block">Cloud Sync Active</span>
+                    <p className="text-xs text-muted-foreground font-medium">Data is securely synced.</p>
+                  </div>
+               </div>
+               <Button onClick={() => logout()} variant="outline" size="sm" className="rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10">
+                 <LogOut className="w-4 h-4 mr-2" /> Logout
+               </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+               <div>
+                  <h3 className="font-bold mb-1">Create an account or Sign in</h3>
+                  <p className="text-xs text-muted-foreground">Store your habits, tasks, and data securely in the cloud across devices.</p>
+               </div>
+               {authMsg && (
+                 <div className="p-3 bg-primary/10 text-primary text-xs rounded-xl font-bold">{authMsg}</div>
+               )}
+               <div className="space-y-3">
                   <Input 
-                    type={showCurrentPassword ? "text" : "password"}
-                    placeholder="Current password"
-                    value={localPassword}
-                    onChange={e => setLocalPassword(e.target.value)}
-                    className="rounded-xl h-10 text-sm pr-10 focus-visible:ring-primary"
+                    type="email" 
+                    placeholder="Email address" 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)} 
+                    className="rounded-xl h-12 px-4 focus-visible:ring-primary"
                   />
-                  <button 
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                <div className="relative">
-                  <Input 
-                    type={showNewPassword ? "text" : "password"}
-                    placeholder="New password"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    className="rounded-xl h-10 text-sm pr-10 focus-visible:ring-primary"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                <div className="relative">
-                  <Input 
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    className="rounded-xl h-10 text-sm pr-10 focus-visible:ring-primary"
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-                <Button variant="outline" className="w-full rounded-xl h-10 text-xs font-bold hover:bg-primary/5 hover:text-primary hover:border-primary">
-                  Update Password
-                </Button>
-              </div>
-           </div>
+                  <div className="relative">
+                    <Input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="Password" 
+                      value={password} 
+                      onChange={e => setPassword(e.target.value)} 
+                      className="rounded-xl h-12 px-4 pr-12 focus-visible:ring-primary"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button onClick={() => handleAuth(false)} disabled={authLoading || !email || !password} className="flex-1 rounded-xl h-12 font-bold shadow-md">
+                      Sign In
+                    </Button>
+                    <Button onClick={() => handleAuth(true)} variant="secondary" disabled={authLoading || !email || !password} className="flex-1 rounded-xl h-12 font-bold">
+                      Register
+                    </Button>
+                  </div>
+                  <div className="relative flex items-center py-2">
+                    <div className="flex-grow border-t border-border" />
+                    <span className="flex-shrink-0 mx-4 text-xs text-muted-foreground uppercase font-bold">or</span>
+                    <div className="flex-grow border-t border-border" />
+                  </div>
+                  <Button onClick={handleGoogleAuth} variant="outline" className="w-full rounded-xl h-12 font-bold flex items-center justify-center gap-2 border-border shadow-sm">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Continue with Google
+                  </Button>
+               </div>
+            </div>
+          )}
         </div>
       </motion.section>
 
@@ -277,9 +306,19 @@ export default function Settings() {
         </div>
         <div className="bg-card rounded-3xl p-5 border border-border shadow-sm space-y-5">
           {[
-            { key: "notifications_enabled", label: "Push Notifications", desc: "Allow system reminders" },
+            { key: "notifications_enabled", label: "Push Notifications", desc: "Allow system reminders", 
+              onChange: async (e: any) => { 
+                if (e.target.checked) {
+                  if ('Notification' in window) {
+                    await Notification.requestPermission();
+                  }
+                }
+                updateSettings({ notifications_enabled: e.target.checked });
+              } 
+            },
             { key: "tasks_notifications", label: "Task Alerts", desc: "Notify on task due dates" },
             { key: "habits_notifications", label: "Habit Nudges", desc: "Daily reminders to complete habits" },
+            { key: "notify_missed", label: "Missed Items Alerts", desc: "Notify when you miss a task/habit/payment" },
           ].map(item => (
             <label key={item.key} className={`flex items-center justify-between cursor-pointer group p-1 -m-1 rounded-xl transition-colors hover:bg-primary/5 ${item.key !== "notifications_enabled" && !settings.notifications_enabled ? "opacity-50 cursor-not-allowed" : ""}`}>
               <div className="flex-1 pr-4">
@@ -288,11 +327,43 @@ export default function Settings() {
               </div>
               <Switch
                 checked={(settings as any)[item.key]}
-                onCheckedChange={v => updateSettings({ [item.key]: v })}
+                onCheckedChange={v => item.onChange ? item.onChange({target: {checked: v}}) : updateSettings({ [item.key]: v })}
                 disabled={item.key !== "notifications_enabled" && !settings.notifications_enabled}
               />
             </label>
           ))}
+
+          <div className={`space-y-4 pt-2 border-t border-border ${!settings.notifications_enabled ? "opacity-50 pointer-events-none" : ""}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold">Daily Reminder Time</p>
+                <p className="text-[10px] text-muted-foreground font-medium">Time for overall daily summary</p>
+              </div>
+              <Input
+                type="time"
+                value={(settings as any).daily_reminder_time || "09:30"}
+                onChange={(e) => updateSettings({ daily_reminder_time: e.target.value })}
+                className="w-32 rounded-xl text-center font-mono"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold">Advance Notice</p>
+                <p className="text-[10px] text-muted-foreground font-medium">Minutes before item is due</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  max="1440"
+                  value={(settings as any).reminder_advance_time || "30"}
+                  onChange={(e) => updateSettings({ reminder_advance_time: parseInt(e.target.value) || 0 })}
+                  className="w-20 rounded-xl text-center tabular-nums"
+                />
+                <span className="text-xs font-bold text-muted-foreground">min</span>
+              </div>
+            </div>
+          </div>
         </div>
       </motion.section>
 

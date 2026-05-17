@@ -5,12 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "USD", uzsRate = 12700) {
+export function formatCurrency(amount: number, toCurrency = "USD", uzsRate = 12700, fromCurrency?: string) {
   if (!amount && amount !== 0) return "-";
-  if (currency === "UZS") {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "UZS", maximumFractionDigits: 0 }).format(amount);
+  
+  let finalAmount = amount;
+  if (fromCurrency && fromCurrency !== toCurrency) {
+    if (fromCurrency === "USD" && toCurrency === "UZS") finalAmount = amount * uzsRate;
+    if (fromCurrency === "UZS" && toCurrency === "USD") finalAmount = amount / uzsRate;
   }
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+
+  if (toCurrency === "UZS") {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "UZS", maximumFractionDigits: 0 }).format(finalAmount);
+  }
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(finalAmount);
 }
 
 export function convertCurrency(amount: number, fromCurrency: string, toCurrency: string, uzsRate = 12700) {

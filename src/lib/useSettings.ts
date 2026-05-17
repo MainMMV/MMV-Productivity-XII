@@ -11,6 +11,9 @@ const DEFAULT_SETTINGS = {
   notifications_enabled: true,
   tasks_notifications: true,
   habits_notifications: true,
+  daily_reminder_time: "09:30",
+  reminder_advance_time: 30, // minutes
+  notify_missed: true,
   first_name: "MMV",
   last_name: "User",
 };
@@ -35,6 +38,45 @@ export function useSettings() {
     const radiusVal = typeof settings.border_radius_percentage !== 'undefined' ? settings.border_radius_percentage : 35;
     const radiusRem = (radiusVal / 50) * 1;
     document.documentElement.style.setProperty("--radius", `${radiusRem}rem`);
+
+    // Dynamically update favicon and app icon
+    const hue = settings.theme_hue || 220;
+    const color = `hsl(${hue}, 90%, 66%)`;
+    const darkColor = `hsl(${hue}, 90%, 55%)`;
+    
+    const svg = `
+      <svg width="256" height="256" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.2" flood-color="${darkColor}" />
+          </filter>
+        </defs>
+        <rect width="100" height="100" rx="${radiusVal / 2.5}" fill="white" />
+        <g transform="translate(15, 15) scale(0.7)" filter="url(#shadow)">
+          <path d="M 75 25 A 35 35 0 1 0 85 50" fill="none" stroke="${color}" stroke-width="18" stroke-linecap="round" />
+          <path d="M 30 55 L 45 70 L 75 40" fill="none" stroke="${color}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+      </svg>
+    `.trim().replace(/>\s+</g, '><');
+
+    const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+    let favLink = document.querySelector('link[rel="icon"]');
+    if (!favLink) {
+      favLink = document.createElement('link');
+      favLink.setAttribute('rel', 'icon');
+      document.head.appendChild(favLink);
+    }
+    favLink.setAttribute('href', dataUrl);
+
+    let appleLink = document.querySelector('link[rel="apple-touch-icon"]');
+    if (!appleLink) {
+      appleLink = document.createElement('link');
+      appleLink.setAttribute('rel', 'apple-touch-icon');
+      document.head.appendChild(appleLink);
+    }
+    appleLink.setAttribute('href', dataUrl);
+
   }, [settings.theme_hue, settings.border_radius_percentage]);
 
   // Apply dark/light/system mode
@@ -59,8 +101,7 @@ export function useSettings() {
 
   async function loadSettings() {
     try {
-      const me = await base44.auth.me();
-      const list = await base44.entities.UserSettings.filter({ userId: me.id });
+      const list = await base44.entities.UserSettings.list();
       if (list && list.length > 0) {
         setSettings({ ...DEFAULT_SETTINGS, ...list[0] });
         setSettingsId(list[0].id);
@@ -80,8 +121,12 @@ export function useSettings() {
   async function saveSettings() {
     try {
       setLoading(true);
-      const me = await base44.auth.me();
-      const payload = { ...settings, userId: me.id };
+      
+      const payload = { ...settings };
+      // Remove id and user_id if they exist to prevent overriding
+      delete payload.id;
+      delete payload.user_id;
+
       if (settingsId) {
         await base44.entities.UserSettings.update(settingsId, payload);
       } else {

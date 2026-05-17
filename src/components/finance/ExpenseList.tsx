@@ -36,7 +36,7 @@ export default function ExpenseList({ expenses, onRefresh, settings, dateRange }
       </div>
       <div className="text-right flex items-center gap-2">
         <p className="text-sm font-bold text-rose-500">
-          -{formatCurrency(expense.amount_usd || expense.amount, settings.currency_primary, settings.uzs_rate)}
+          -{formatCurrency(expense.amount, settings.currency_primary, settings.uzs_rate, expense.currency)}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

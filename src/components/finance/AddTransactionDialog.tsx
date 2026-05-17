@@ -41,7 +41,6 @@ export default function AddTransactionDialog({ open, onClose, type, onSaved, set
       const payload = { 
         ...form, 
         amount: amount,
-        amount_usd: amountUSD,
         is_active: type === "subscription" ? true : undefined
       };
 

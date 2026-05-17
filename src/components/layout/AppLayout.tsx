@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, Flame, CheckCircle, Wallet, Target, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNotifications } from '@/lib/useNotifications';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Home', icon: Home },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
 
 export default function AppLayout() {
   const location = useLocation();
+  useNotifications();
 
   return (
     <div className="flex flex-col h-[100dvh] bg-background max-w-md mx-auto relative shadow-2xl overflow-hidden">

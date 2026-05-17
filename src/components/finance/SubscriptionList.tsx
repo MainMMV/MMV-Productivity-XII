@@ -47,7 +47,7 @@ export default function SubscriptionList({ subscriptions, onRefresh, settings }:
             <div className="text-right flex items-center gap-4">
               <div>
                 <p className="text-sm font-bold text-foreground">
-                  {formatCurrency(sub.amount, settings.currency_primary, settings.uzs_rate)}
+                  {formatCurrency(sub.amount, settings.currency_primary, settings.uzs_rate, sub.currency)}
                 </p>
               </div>
               <div className="flex items-center gap-2">

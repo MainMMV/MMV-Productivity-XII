@@ -27,7 +27,12 @@ export default function Home() {
   const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0];
   const quote = QUOTES[new Date().getDay() % QUOTES.length];
 
+  const [dismissedNotifIds, setDismissedNotifIds] = useState<string[]>([]);
+
   useEffect(() => {
+    const saved = localStorage.getItem("dismissed_notifications");
+    if (saved) setDismissedNotifIds(JSON.parse(saved));
+
     Promise.all([
       base44.entities.Habit.list(),
       base44.entities.Task.filter({ status: "todo" }),
@@ -51,6 +56,21 @@ export default function Home() {
     return false;
   };
 
+  // Notification count logic
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const missedHabits = habits.filter(h => h.is_active && isHabitDueOnDate(h, yesterday) && !h.completions?.includes(yesterdayStr));
+  const overdueTasks = tasks.filter(t => t.due_date && t.due_date < today && t.status !== 'done');
+  const upcomingSubs = subscriptions.filter(s => s.is_active && (s.next_billing === today || s.next_billing === tomorrow));
+  
+  const allNotifications = [
+    ...overdueTasks.map(t => ({ id: `task-${t.id}` })),
+    ...missedHabits.map(h => ({ id: `habit-${h.id}` })),
+    ...upcomingSubs.map(s => ({ id: `sub-${s.id}` }))
+  ];
+  const unreadCount = allNotifications.filter(n => !dismissedNotifIds.includes(n.id)).length;
+
   const todayHabits = habits.filter(h => h.is_active);
   const completedTodayCount = todayHabits.filter(h => h.completions?.includes(today)).length;
   const habitPct = todayHabits.length > 0 ? Math.round((completedTodayCount / todayHabits.length) * 100) : 0;
@@ -59,21 +79,28 @@ export default function Home() {
   const overdueTaskCount = tasks.filter(t => t.due_date && t.due_date < today).length;
 
   const upcomingItems = [
-    ...habits.filter(h => h.is_active && !h.completions?.includes(today) && isHabitDueOnDate(h, new Date())).map(h => ({ ...h, type: 'habit', dateLabel: 'Today' })),
-    ...tasks.filter(t => t.due_date === today).map(t => ({ ...t, type: 'task', dateLabel: 'Today' })),
-    ...subscriptions.filter(s => s.is_active && s.next_billing === today).map(s => ({ ...s, type: 'subscription', dateLabel: 'Today' })),
-    ...habits.filter(h => h.is_active && isHabitDueOnDate(h, new Date(new Date().setDate(new Date().getDate() + 1)))).map(h => ({ ...h, type: 'habit', dateLabel: 'Tomorrow' })),
-    ...tasks.filter(t => t.due_date === tomorrow).map(t => ({ ...t, type: 'task', dateLabel: 'Tomorrow' })),
-    ...subscriptions.filter(s => s.is_active && s.next_billing === tomorrow).map(s => ({ ...s, type: 'subscription', dateLabel: 'Tomorrow' })),
+    ...habits.filter(h => h.is_active && !h.completions?.includes(today) && isHabitDueOnDate(h, new Date())).map(h => ({ ...h, type: 'habit', dateLabel: 'Today', path: '/habits', timeLabel: h.notification_time })),
+    ...tasks.filter(t => t.due_date === today).map(t => ({ ...t, type: 'task', dateLabel: 'Today', path: '/tasks', timeLabel: t.due_time })),
+    ...subscriptions.filter(s => s.is_active && s.next_billing === today).map(s => ({ ...s, type: 'subscription', dateLabel: 'Today', path: '/finance', timeLabel: s.reminder_time })),
+    ...habits.filter(h => h.is_active && isHabitDueOnDate(h, new Date(new Date().setDate(new Date().getDate() + 1)))).map(h => ({ ...h, type: 'habit', dateLabel: 'Tomorrow', path: '/habits', timeLabel: h.notification_time })),
+    ...tasks.filter(t => t.due_date === tomorrow).map(t => ({ ...t, type: 'task', dateLabel: 'Tomorrow', path: '/tasks', timeLabel: t.due_time })),
+    ...subscriptions.filter(s => s.is_active && s.next_billing === tomorrow).map(s => ({ ...s, type: 'subscription', dateLabel: 'Tomorrow', path: '/finance', timeLabel: s.reminder_time })),
   ];
+
+  const getAmountInPrimary = (item: any) => {
+    let amt = item.amount || 0;
+    if (item.currency === 'USD' && settings.currency_primary === 'UZS') amt *= settings.uzs_rate;
+    if (item.currency === 'UZS' && settings.currency_primary === 'USD') amt /= settings.uzs_rate;
+    return amt;
+  };
 
   const thisMonthExpenses = expenses
     .filter(e => e.date?.startsWith(today.slice(0, 7)))
-    .reduce((sum, e) => sum + (e.amount_usd || e.amount || 0), 0);
+    .reduce((sum, e) => sum + getAmountInPrimary(e), 0);
 
   const thisMonthIncome = income
     .filter(i => i.date?.startsWith(today.slice(0, 7)))
-    .reduce((sum, i) => sum + (i.amount_usd || i.amount || 0), 0);
+    .reduce((sum, i) => sum + getAmountInPrimary(i), 0);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -129,9 +156,12 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-foreground mt-0.5">{greeting()} 👋</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 bg-card border border-border flex items-center justify-center rounded-2xl shadow-sm hover:bg-primary/10 group transition-colors">
+          <Link to="/notifications" className="w-10 h-10 bg-card border border-border flex items-center justify-center rounded-2xl shadow-sm hover:bg-primary/10 group transition-colors relative">
             <Bell className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-          </button>
+            {unreadCount > 0 && (
+              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 flex items-center justify-center rounded-full border-2 border-card text-[8px] font-bold text-white">{unreadCount}</span>
+            )}
+          </Link>
         </div>
       </motion.div>
 
@@ -188,25 +218,26 @@ export default function Home() {
         </div>
         <div className="space-y-2">
           {upcomingItems.length > 0 ? upcomingItems.map((item, idx) => (
-            <motion.div key={`${item.type}-${item.id || idx}-${item.dateLabel}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + idx * 0.05 }}
-              className="bg-card rounded-2xl p-3 border border-border flex items-center gap-3 hover:bg-primary/5 transition-colors group">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center fill-white ${
-                item.type === 'habit' ? 'bg-orange-500' : 
-                item.type === 'task' ? 'bg-primary' : 
-                'bg-rose-500'}`}
-              >
-                {item.type === 'habit' ? <Flame className="w-4 h-4 text-white" /> : 
-                 item.type === 'task' ? <CheckCircle className="w-4 h-4 text-white" /> : 
-                 <TrendingDown className="w-4 h-4 text-white" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{item.title}</p>
-                <p className="text-[10px] text-muted-foreground uppercase ">{item.dateLabel} • {item.type}</p>
-              </div>
-              {item.type === 'subscription' && (
-                <p className="text-xs font-bold text-rose-500">-{formatCurrency(item.amount, settings.currency_primary, settings.uzs_rate)}</p>
-              )}
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
+            <motion.div key={`${item.type}-${item.id || idx}-${item.dateLabel}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + idx * 0.05 }}>
+              <Link to={item.path} className="bg-card rounded-2xl p-3 border border-border flex items-center gap-3 hover:bg-primary/5 transition-colors group">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center fill-white ${
+                  item.type === 'habit' ? 'bg-orange-500' : 
+                  item.type === 'task' ? 'bg-primary' : 
+                  'bg-rose-500'}`}
+                >
+                  {item.type === 'habit' ? <Flame className="w-4 h-4 text-white" /> : 
+                   item.type === 'task' ? <CheckCircle className="w-4 h-4 text-white" /> : 
+                   <TrendingDown className="w-4 h-4 text-white" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{item.title}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase ">{item.dateLabel} • {item.type} {item.timeLabel ? `• ${item.timeLabel}` : ''}</p>
+                </div>
+                {item.type === 'subscription' && (
+                  <p className="text-xs font-bold text-rose-500 min-w-fit pr-1">-{formatCurrency(item.currency !== settings.currency_primary ? (item.currency === 'USD' ? item.amount * settings.uzs_rate : item.amount / settings.uzs_rate) : item.amount, settings.currency_primary)}</p>
+                )}
+                <ChevronRight className="w-4 h-4 flex-shrink-0 text-muted-foreground/30" />
+              </Link>
             </motion.div>
           )) : (
             <div className="bg-card/50 rounded-2xl p-6 border border-dashed border-border flex flex-col items-center justify-center text-center">
