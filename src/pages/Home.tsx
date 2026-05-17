@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, Flame, TrendingDown, TrendingUp, Target, Bell, ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useSettings } from "@/lib/useSettings";
+import { useAuth } from "@/lib/AuthContext";
 
 const QUOTES = [
   "Small steps every day lead to big results.",
@@ -23,6 +24,7 @@ export default function Home() {
   const [goals, setGoals] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const { settings } = useSettings();
+  const { user } = useAuth();
   const today = new Date().toISOString().split("T")[0];
   const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0];
   const quote = QUOTES[new Date().getDay() % QUOTES.length];
@@ -109,6 +111,8 @@ export default function Home() {
     return "Good evening";
   };
 
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || settings.first_name || "MMV";
+
   const widgets = [
     {
       title: "Habits Today",
@@ -153,7 +157,7 @@ export default function Home() {
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 20 }} className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-[10px] text-muted-foreground font-bold uppercase ">{format(new Date(), "EEEE, d MMMM yyyy")}</p>
-          <h1 className="text-2xl font-bold text-foreground mt-0.5">{greeting()} 👋</h1>
+          <h1 className="text-2xl font-bold text-foreground mt-0.5">{greeting()}, {displayName} 👋</h1>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/notifications" className="w-10 h-10 bg-card border border-border flex items-center justify-center rounded-2xl shadow-sm hover:bg-primary/10 group transition-colors relative">

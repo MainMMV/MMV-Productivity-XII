@@ -111,7 +111,11 @@ export const base44 = {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setAuthState(true);
-        return { id: session.user.id };
+        return { 
+          id: session.user.id,
+          email: session.user.email,
+          user_metadata: session.user.user_metadata
+        };
       }
       setAuthState(false);
       throw { status: 401, message: "Not logged in" };

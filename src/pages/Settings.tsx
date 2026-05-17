@@ -138,8 +138,8 @@ export default function Settings() {
                     <User className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full mb-1 inline-block">Cloud Sync Active</span>
-                    <p className="text-xs text-muted-foreground font-medium">Data is securely synced.</p>
+                    <p className="font-bold">{user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "User"}</p>
+                    <span className="bg-emerald-500/10 text-emerald-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full mt-1 inline-block">Cloud Sync Active</span>
                   </div>
                </div>
                <Button onClick={() => logout()} variant="outline" size="sm" className="rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10">
