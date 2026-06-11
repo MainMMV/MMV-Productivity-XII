@@ -100,21 +100,40 @@ export function useSettings() {
   }, [settings.theme_mode]);
 
   async function loadSettings() {
+    let localSettings = DEFAULT_SETTINGS;
+    try {
+      const stored = localStorage.getItem("mmv-settings");
+      if (stored) {
+        localSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+        setSettings(localSettings);
+      }
+    } catch (e) {}
+
     try {
       const list = await base44.entities.UserSettings.list();
       if (list && list.length > 0) {
-        setSettings({ ...DEFAULT_SETTINGS, ...list[0] });
+        const dbSettings = { ...DEFAULT_SETTINGS, ...list[0] };
+        setSettings(dbSettings);
         setSettingsId(list[0].id);
+        localStorage.setItem("mmv-settings", JSON.stringify(dbSettings));
+      } else {
+        // Logged in but no settings? Create them!
+        const created = await base44.entities.UserSettings.create(localSettings);
+        setSettingsId(created.id);
       }
     } catch (e) {
-      console.log("No settings found, using defaults");
+      console.log("No DB settings found (not logged in), using local/defaults");
     } finally {
       setLoading(false);
     }
   }
 
   function updateSettings(updates: any) {
-    setSettings(prev => ({ ...prev, ...updates }));
+    setSettings(prev => {
+      const next = { ...prev, ...updates };
+      localStorage.setItem("mmv-settings", JSON.stringify(next));
+      return next;
+    });
     setHasChanges(true);
   }
 

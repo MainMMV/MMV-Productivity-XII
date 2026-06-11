@@ -1,0 +1,25 @@
+{
+  "name": "mmv-productivity-telegram-bot",
+  "version": "1.0.0",
+  "description": "Companion Telegram Bot for the MMV Productivity Suite sharing the same Supabase database.",
+  "main": "bot.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node bot.js",
+    "dev": "tsx bot.ts",
+    "webhook": "tsx webhook.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.24",
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.1"
+  }
+}

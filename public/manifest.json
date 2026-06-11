@@ -1,0 +1,39 @@
+{
+  "name": "MMV Productivity",
+  "short_name": "MMV",
+  "description": "A comprehensive productivity suite with habits, tasks, finance, and goal tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Habits",
+      "url": "/habits",
+      "description": "Daily habit tracking"
+    },
+    {
+      "name": "Tasks",
+      "url": "/tasks",
+      "description": "Task manager"
+    },
+    {
+      "name": "Finance",
+      "url": "/finance",
+      "description": "Finance tracker"
+    },
+    {
+      "name": "Goals",
+      "url": "/goals",
+      "description": "Goal goals tracker"
+    }
+  ]
+}

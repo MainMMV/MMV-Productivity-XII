@@ -15,8 +15,19 @@ import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 
+import { useEffect } from 'react';
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+
+  useEffect(() => {
+    // If we're inside the popup and Supabase has processed the hash
+    if (window.opener && window.name === 'supabase_oauth') {
+      setTimeout(() => {
+         window.close();
+      }, 500);
+    }
+  }, []);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
