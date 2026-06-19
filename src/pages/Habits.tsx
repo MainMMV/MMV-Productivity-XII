@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { scheduleNotification } from "@/lib/utils";
 import HabitMatrix from "@/components/habits/HabitMatrix";
 import HabitCard from "@/components/habits/HabitCard";
 import DateRangePicker from "@/components/ui/DateRangePicker";
@@ -58,7 +59,7 @@ export default function Habits() {
     if (editHabit) {
       await base44.entities.Habit.update(editHabit.id, form);
     } else {
-      await base44.entities.Habit.create({ ...form, completions: [], streak: 0, is_active: true });
+      await base44.entities.Habit.create({ ...form, completions: [], is_active: true });
     }
     if (form.notification_time) {
       const now = new Date();
@@ -78,8 +79,7 @@ export default function Habits() {
     const newCompletions = completions.includes(dateStr)
       ? completions.filter((d: string) => d !== dateStr)
       : [...completions, dateStr];
-    const streak = calculateStreak(newCompletions);
-    await base44.entities.Habit.update(habit.id, { completions: newCompletions, streak });
+    await base44.entities.Habit.update(habit.id, { completions: newCompletions });
     loadHabits();
   }
 
@@ -168,19 +168,21 @@ export default function Habits() {
                       <p className="text-xs font-bold text-muted-foreground uppercase">{date.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}</p>
                       <div className="h-px bg-border flex-1" />
                     </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {filteredHabits.map(habit => (
                       <motion.div key={`${habit.id}-${date.toISOString()}`} variants={item}>
                         <HabitCard habit={habit} onToggle={toggleToday} onDelete={deleteHabit} onEdit={openEdit} targetDate={date} />
                       </motion.div>
                     ))}
                   </div>
+                </div>
                 ));
               }
 
               // Default view without date range filtering
               const defaultDate = new Date();
               return (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {filteredHabits.map(habit => (
                     <motion.div key={habit.id} variants={item}>
                       <HabitCard habit={habit} onToggle={toggleToday} onDelete={deleteHabit} onEdit={openEdit} targetDate={defaultDate} />

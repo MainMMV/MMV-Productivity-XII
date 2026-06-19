@@ -7,6 +7,8 @@ const DEFAULT_SETTINGS = {
   theme_hue: 220,
   theme_mode: "light",
   border_radius_percentage: 35,
+  animation_timing: "ease-in-out",
+  container_width: "100%",
   uzs_rate: 12200,
   notifications_enabled: true,
   tasks_notifications: true,
@@ -16,6 +18,7 @@ const DEFAULT_SETTINGS = {
   notify_missed: true,
   first_name: "MMV",
   last_name: "User",
+  calendar_start_day: "Monday" as "Monday" | "Sunday",
 };
 
 export function useSettings() {

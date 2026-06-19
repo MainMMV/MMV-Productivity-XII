@@ -1,4 +1,4 @@
-import { Trash2, Pencil, Wallet, MoreHorizontal } from "lucide-react";
+import { Trash2, Pencil, Wallet, MoreHorizontal, ArrowDownRight } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ export default function ExpenseList({ expenses, onRefresh, settings, dateRange }
       className="bg-card rounded-2xl p-4 border border-border flex items-center gap-3 hover:bg-primary/5 hover:border-primary/20 transition-all group"
     >
       <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-rose-500/20 transition-colors">
-        <span className="text-lg">💸</span>
+        <ArrowDownRight className="w-5 h-5 text-rose-500" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{expense.title}</p>

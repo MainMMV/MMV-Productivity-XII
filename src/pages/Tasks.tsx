@@ -16,6 +16,8 @@ import PullToRefresh from "@/components/common/PullToRefresh";
 import { scheduleNotification } from "@/lib/utils";
 import { format } from "date-fns";
 
+import KanbanBoard from "@/components/tasks/KanbanBoard";
+
 const PRIORITY_COLORS: Record<string, string> = { 
   low: "bg-emerald-100 text-emerald-700", 
   medium: "bg-yellow-100 text-yellow-700", 
@@ -85,8 +87,7 @@ export default function Tasks() {
     setShowForm(true);
   }
 
-  const filtered = tasks.filter(t => {
-    if (t.status !== activeTab) return false;
+  const filteredByDate = tasks.filter(t => {
     if (dateFilter?.from) {
       if (!t.due_date) return false;
       const td = new Date(t.due_date);
@@ -99,10 +100,12 @@ export default function Tasks() {
     return true;
   });
 
+  const filtered = filteredByDate.filter(t => t.status === activeTab);
+
   return (
     <PullToRefresh onRefresh={loadTasks}>
-    <div className="px-4 pt-6 pb-4">
-      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 280 }} className="flex items-center justify-between mb-4">
+    <div className="px-4 pt-6 pb-4 h-[calc(100vh-theme(spacing.16))] flex flex-col min-h-0">
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 280 }} className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
           <h1 className="text-2xl font-bold">Tasks</h1>
           <p className="text-xs text-muted-foreground">{tasks.filter(t => t.status === "todo").length} remaining</p>
@@ -115,8 +118,8 @@ export default function Tasks() {
         </div>
       </motion.div>
 
-      {/* Status Tabs */}
-      <div className="flex gap-1 bg-muted p-1 rounded-2xl mb-4">
+      {/* Status Tabs (Mobile Only) */}
+      <div className="md:hidden flex gap-1 bg-muted p-1 rounded-2xl mb-4 flex-shrink-0">
         {STATUS_TABS.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 py-1.5 text-xs font-semibold rounded-xl capitalize transition-all ${activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
@@ -125,9 +128,15 @@ export default function Tasks() {
         ))}
       </div>
 
-      {/* Tasks list */}
-      <AnimatePresence>
-        <div className="space-y-4">
+      {/* Desktop Kanban */}
+      <div className="hidden md:block flex-1 min-h-0">
+        <KanbanBoard tasks={filteredByDate} onEdit={openEdit} onRefresh={loadTasks} />
+      </div>
+
+      {/* Tasks list (Mobile Only) */}
+      <div className="md:hidden flex-1 overflow-y-auto min-h-0 pb-16">
+        <AnimatePresence>
+          <div className="space-y-4">
           {(() => {
             if (dateFilter?.from) {
               const dates = [];
@@ -148,113 +157,120 @@ export default function Tasks() {
                 // The prompt seemed to want blocks for each day.
                 
                 return (
-                  <div key={date.toISOString()} className="space-y-2">
-                    <div className="flex items-center gap-4 py-2">
+                  <div key={date.toISOString()} className="mb-4">
+                    <div className="flex items-center gap-4 py-2 mb-2">
                       <div className="h-px bg-border flex-1" />
                       <p className="text-xs font-bold text-muted-foreground uppercase">{date.toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' })}</p>
                       <div className="h-px bg-border flex-1" />
                     </div>
-                    {tasksForDate.length > 0 ? tasksForDate.map((task, i) => (
-                      <motion.div key={task.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ delay: i * 0.04 }}>
-                        <div className="bg-card rounded-2xl p-4 border border-border transition-all hover:bg-primary/5 hover:border-primary/20 group cursor-pointer">
-                          <div className="flex items-start gap-3">
-                            <button onClick={(e) => { e.stopPropagation(); toggleStatus(task); }}
-                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all group-hover:border-primary/50 ${task.status === "done" ? "bg-primary border-primary group-hover:border-primary" : "border-border"}`}>
-                              {task.status === "done" && <Check className="w-3 h-3 text-white" />}
-                            </button>
-                            <div className="flex-1 min-w-0" onClick={() => openEdit(task)}>
-                              <p className={`text-sm font-semibold transition-colors group-hover:text-primary ${task.status === "done" ? "line-through text-muted-foreground group-hover:text-primary/70" : ""}`}>{task.title}</p>
-                              {task.description && <p className="text-xs text-muted-foreground mt-0.5 truncate">{task.description}</p>}
-                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                <Badge className={`text-[10px] ${PRIORITY_COLORS[task.priority]}`}>{task.priority}</Badge>
-                                {task.due_date && <span className="text-[10px] text-muted-foreground">{task.due_date}{task.due_time ? ` at ${task.due_time}` : ""}</span>}
-                                {task.repeat !== "none" && (
-                                  <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/5 px-1 rounded">
-                                    <RepeatIcon className="w-2.5 h-2.5" />
-                                    {task.repeat === "custom" ? task.repeat_days?.map((d: number) => ["S", "M", "T", "W", "T", "F", "S"][d]).join("") : task.repeat}
-                                  </div>
-                                )}
-                                {task.notification_enabled && <Bell className="w-3 h-3 text-primary" />}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {tasksForDate.length > 0 ? tasksForDate.map((task, i) => (
+                        <motion.div key={task.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ delay: i * 0.04 }}>
+                          <div className="bg-card rounded-2xl p-4 border border-border transition-all hover:bg-primary/5 hover:border-primary/20 group cursor-pointer h-full">
+                            <div className="flex items-start gap-3">
+                              <button onClick={(e) => { e.stopPropagation(); toggleStatus(task); }}
+                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all group-hover:border-primary/50 ${task.status === "done" ? "bg-primary border-primary group-hover:border-primary" : "border-border"}`}>
+                                {task.status === "done" && <Check className="w-3 h-3 text-white" />}
+                              </button>
+                              <div className="flex-1 min-w-0" onClick={() => openEdit(task)}>
+                                <p className={`text-sm font-semibold transition-colors group-hover:text-primary ${task.status === "done" ? "line-through text-muted-foreground group-hover:text-primary/70" : ""}`}>{task.title}</p>
+                                {task.description && <p className="text-xs text-muted-foreground mt-0.5 truncate">{task.description}</p>}
+                                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                  <Badge className={`text-[10px] ${PRIORITY_COLORS[task.priority]}`}>{task.priority}</Badge>
+                                  {task.due_date && <span className="text-[10px] text-muted-foreground">{task.due_date}{task.due_time ? ` at ${task.due_time}` : ""}</span>}
+                                  {task.repeat !== "none" && (
+                                    <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/5 px-1 rounded">
+                                      <RepeatIcon className="w-2.5 h-2.5" />
+                                      {task.repeat === "custom" ? task.repeat_days?.map((d: number) => ["S", "M", "T", "W", "T", "F", "S"][d]).join("") : task.repeat}
+                                    </div>
+                                  )}
+                                  {task.notification_enabled && <Bell className="w-3 h-3 text-primary" />}
+                                </div>
                               </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-xl hover:bg-primary/10 text-muted-foreground transition-all">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="rounded-2xl">
+                                  <DropdownMenuItem onClick={() => openEdit(task)} className="gap-2 rounded-xl">
+                                    <Edit2 className="w-3.5 h-3.5" /> Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => deleteTask(task.id)} className="gap-2 text-destructive focus:text-destructive rounded-xl">
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-xl hover:bg-primary/10 text-muted-foreground transition-all">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="rounded-2xl">
-                                <DropdownMenuItem onClick={() => openEdit(task)} className="gap-2 rounded-xl">
-                                  <Edit2 className="w-3.5 h-3.5" /> Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => deleteTask(task.id)} className="gap-2 text-destructive focus:text-destructive rounded-xl">
-                                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
                           </div>
-                        </div>
-                      </motion.div>
-                    )) : (
-                      <p className="text-xs text-center text-muted-foreground/60 py-2">No tasks</p>
-                    )}
+                        </motion.div>
+                      )) : (
+                        <p className="text-xs text-center text-muted-foreground/60 py-2 col-span-full">No tasks</p>
+                      )}
+                    </div>
                   </div>
                 );
               });
             }
 
-            return filtered.map((task, i) => (
-              <motion.div key={task.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ delay: i * 0.04 }}>
-                <div className="bg-card rounded-2xl p-4 border border-border transition-all hover:bg-primary/5 hover:border-primary/20 group cursor-pointer">
-                  <div className="flex items-start gap-3">
-                    <button onClick={(e) => { e.stopPropagation(); toggleStatus(task); }}
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all group-hover:border-primary/50 ${task.status === "done" ? "bg-primary border-primary group-hover:border-primary" : "border-border"}`}>
-                      {task.status === "done" && <Check className="w-3 h-3 text-white" />}
-                    </button>
-                    <div className="flex-1 min-w-0" onClick={() => openEdit(task)}>
-                      <p className={`text-sm font-semibold transition-colors group-hover:text-primary ${task.status === "done" ? "line-through text-muted-foreground group-hover:text-primary/70" : ""}`}>{task.title}</p>
-                      {task.description && <p className="text-xs text-muted-foreground mt-0.5 truncate">{task.description}</p>}
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <Badge className={`text-[10px] ${PRIORITY_COLORS[task.priority]}`}>{task.priority}</Badge>
-                        {task.due_date && <span className="text-[10px] text-muted-foreground">{task.due_date}{task.due_time ? ` at ${task.due_time}` : ""}</span>}
-                        {task.repeat !== "none" && (
-                          <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/5 px-1 rounded">
-                            <RepeatIcon className="w-2.5 h-2.5" />
-                            {task.repeat === "custom" ? task.repeat_days?.map((d: number) => ["S", "M", "T", "W", "T", "F", "S"][d]).join("") : task.repeat}
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filtered.map((task, i) => (
+                  <motion.div key={task.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ delay: i * 0.04 }}>
+                    <div className="bg-card rounded-2xl p-4 border border-border transition-all hover:bg-primary/5 hover:border-primary/20 group cursor-pointer h-full">
+                      <div className="flex items-start gap-3">
+                        <button onClick={(e) => { e.stopPropagation(); toggleStatus(task); }}
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all group-hover:border-primary/50 ${task.status === "done" ? "bg-primary border-primary group-hover:border-primary" : "border-border"}`}>
+                          {task.status === "done" && <Check className="w-3 h-3 text-white" />}
+                        </button>
+                        <div className="flex-1 min-w-0" onClick={() => openEdit(task)}>
+                          <p className={`text-sm font-semibold transition-colors group-hover:text-primary ${task.status === "done" ? "line-through text-muted-foreground group-hover:text-primary/70" : ""}`}>{task.title}</p>
+                          {task.description && <p className="text-xs text-muted-foreground mt-0.5 truncate">{task.description}</p>}
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <Badge className={`text-[10px] ${PRIORITY_COLORS[task.priority]}`}>{task.priority}</Badge>
+                            {task.due_date && <span className="text-[10px] text-muted-foreground">{task.due_date}{task.due_time ? ` at ${task.due_time}` : ""}</span>}
+                            {task.repeat !== "none" && (
+                              <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/5 px-1 rounded">
+                                <RepeatIcon className="w-2.5 h-2.5" />
+                                {task.repeat === "custom" ? task.repeat_days?.map((d: number) => ["S", "M", "T", "W", "T", "F", "S"][d]).join("") : task.repeat}
+                              </div>
+                            )}
+                            {task.notification_enabled && <Bell className="w-3 h-3 text-primary" />}
                           </div>
-                        )}
-                        {task.notification_enabled && <Bell className="w-3 h-3 text-primary" />}
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-xl hover:bg-primary/10 text-muted-foreground transition-all">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="rounded-2xl">
+                            <DropdownMenuItem onClick={() => openEdit(task)} className="gap-2 rounded-xl">
+                              <Edit2 className="w-3.5 h-3.5" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteTask(task.id)} className="gap-2 text-destructive focus:text-destructive rounded-xl">
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button onClick={e => e.stopPropagation()} className="p-1.5 rounded-xl hover:bg-primary/10 text-muted-foreground transition-all">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-2xl">
-                        <DropdownMenuItem onClick={() => openEdit(task)} className="gap-2 rounded-xl">
-                          <Edit2 className="w-3.5 h-3.5" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => deleteTask(task.id)} className="gap-2 text-destructive focus:text-destructive rounded-xl">
-                          <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </motion.div>
-            ));
+                  </motion.div>
+                ))}
+              </div>
+            );
           })()}
         </div>
       </AnimatePresence>
 
       {filtered.length === 0 && (
-        <div className="text-center py-16">
+        <div className="text-center py-16 md:hidden">
           <Check className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">No tasks here</p>
         </div>
       )}
+      </div>
 
       {/* Task Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { CheckCircle, Flame, TrendingDown, TrendingUp, Target, Bell, ChevronRight } from "lucide-react";
+import { CheckCircle, Flame, TrendingDown, TrendingUp, Target, Bell, ChevronRight, Sun, Moon, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useSettings } from "@/lib/useSettings";
 import { useAuth } from "@/lib/AuthContext";
@@ -157,7 +157,10 @@ export default function Home() {
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", stiffness: 260, damping: 20 }} className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-[10px] text-muted-foreground font-bold uppercase ">{format(new Date(), "EEEE, d MMMM yyyy")}</p>
-          <h1 className="text-2xl font-bold text-foreground mt-0.5">{greeting()}, {displayName} 👋</h1>
+          <h1 className="text-2xl font-bold text-foreground mt-0.5 flex items-center gap-2">
+            {greeting()}, {displayName}
+            {greeting() === "Good evening" ? <Moon className="w-5 h-5 text-blue-500" /> : greeting() === "Good morning" ? <Sun className="w-5 h-5 text-yellow-500" /> : <Sparkles className="w-5 h-5 text-orange-500" />}
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/notifications" className="w-10 h-10 bg-card border border-border flex items-center justify-center rounded-2xl shadow-sm hover:bg-primary/10 group transition-colors relative">
@@ -169,9 +172,24 @@ export default function Home() {
         </div>
       </motion.div>
 
+      {/* Quick Actions Component */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: "New Task", icon: CheckCircle, to: "/tasks?new=true", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20 hover:scale-[1.02]" },
+          { label: "Add Habit", icon: Flame, to: "/habits?new=true", color: "text-orange-500", bg: "bg-orange-500/10 hover:bg-orange-500/20 hover:scale-[1.02]" },
+          { label: "Log Expense", icon: TrendingDown, to: "/finance?new=true", color: "text-rose-500", bg: "bg-rose-500/10 hover:bg-rose-500/20 hover:scale-[1.02]" },
+          { label: "New Goal", icon: Target, to: "/goals?new=true", color: "text-emerald-500", bg: "bg-emerald-500/10 hover:bg-emerald-500/20 hover:scale-[1.02]" },
+        ].map(btn => (
+          <Link key={btn.label} to={btn.to} className={`flex flex-col items-center justify-center py-4 px-2 rounded-3xl transition-all ${btn.bg} border border-[#0000000a] dark:border-[#ffffff0a] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]`}>
+            <btn.icon className={`w-6 h-6 mb-2 ${btn.color}`} />
+            <span className={`text-xs font-bold text-center ${btn.color}`}>{btn.label}</span>
+          </Link>
+        ))}
+      </motion.div>
+
       {/* Habit Score Card */}
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}
-        className="bg-card rounded-3xl p-5 mb-4 border border-border transition-all active:scale-[0.99] hover:bg-primary/5 hover:border-primary/20 group">
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
+        className="bg-card rounded-3xl p-5 mb-6 border border-border transition-all active:scale-[0.99] hover:bg-primary/5 hover:border-primary/20 group">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase ">Daily Habit Score</p>
@@ -196,63 +214,71 @@ export default function Home() {
         </Link>
       </motion.div>
 
-      {/* Widgets Grid */}
-      <motion.div variants={containerAnim} initial="hidden" animate="show" className="grid grid-cols-2 gap-3 mb-6">
-        {widgets.map((w) => (
-          <motion.div key={w.title} variants={itemAnim}>
-            <Link to={w.path}>
-              <div className="bg-card rounded-2xl p-4 border border-border active:scale-95 hover:bg-primary/5 hover:border-primary/20 transition-all h-full group">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 fill-white transition-transform group-hover:scale-110 group-hover:rotate-3 ${w.title.includes('Expense') || w.title.includes('Spending') ? 'bg-rose-500' : w.title.includes('Income') ? 'bg-emerald-500' : w.title.includes('Habits') ? 'bg-orange-500' : 'bg-primary'}`}>
-                  <w.icon className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{w.value}</p>
-                <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1 ">{w.title}</p>
-                <p className="text-[10px] text-muted-foreground/70 mt-0.5">{w.sub}</p>
-              </div>
-            </Link>
+      <div className="flex flex-col lg:flex-row gap-6 mb-8">
+        {/* Productivity Widgets Grid */}
+        <div className="w-full lg:w-fit flex-shrink-0">
+          <motion.div variants={containerAnim} initial="hidden" animate="show" className="grid grid-cols-2 gap-4 h-full">
+            {widgets.map((w) => (
+              <motion.div key={w.title} variants={itemAnim}>
+                <Link to={w.path} className="block h-full">
+                  <div className="bg-card rounded-3xl p-5 border border-border active:scale-95 hover:bg-primary/5 hover:border-primary/20 transition-all w-full md:w-[200px] h-full md:h-[200px] aspect-square md:aspect-auto group flex flex-col justify-between shadow-sm">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 fill-white transition-transform group-hover:scale-110 group-hover:rotate-3 ${w.title.includes('Expense') || w.title.includes('Spending') ? 'bg-rose-500' : w.title.includes('Income') ? 'bg-emerald-500' : w.title.includes('Habits') ? 'bg-orange-500' : 'bg-primary'}`}>
+                      <w.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-3xl font-bold text-foreground leading-tight group-hover:text-primary transition-colors truncate">{w.value}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1.5 tracking-wider">{w.title}</p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5 max-w-full truncate">{w.sub}</p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
           </motion.div>
-        ))}
-      </motion.div>
+        </div>
 
-      {/* Upcoming Items List */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground">Upcoming</h2>
-          {upcomingItems.length > 0 && <span className="text-[10px] font-bold text-primary uppercase">{upcomingItems.length} items</span>}
-        </div>
-        <div className="space-y-2">
-          {upcomingItems.length > 0 ? upcomingItems.map((item, idx) => (
-            <motion.div key={`${item.type}-${item.id || idx}-${item.dateLabel}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + idx * 0.05 }}>
-              <Link to={item.path} className="bg-card rounded-2xl p-3 border border-border flex items-center gap-3 hover:bg-primary/5 transition-colors group">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center fill-white ${
-                  item.type === 'habit' ? 'bg-orange-500' : 
-                  item.type === 'task' ? 'bg-primary' : 
-                  'bg-rose-500'}`}
-                >
-                  {item.type === 'habit' ? <Flame className="w-4 h-4 text-white" /> : 
-                   item.type === 'task' ? <CheckCircle className="w-4 h-4 text-white" /> : 
-                   <TrendingDown className="w-4 h-4 text-white" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{item.title}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase ">{item.dateLabel} • {item.type} {item.timeLabel ? `• ${item.timeLabel}` : ''}</p>
-                </div>
-                {item.type === 'subscription' && (
-                  <p className="text-xs font-bold text-rose-500 min-w-fit pr-1">-{formatCurrency(item.currency !== settings.currency_primary ? (item.currency === 'USD' ? item.amount * settings.uzs_rate : item.amount / settings.uzs_rate) : item.amount, settings.currency_primary)}</p>
-                )}
-                <ChevronRight className="w-4 h-4 flex-shrink-0 text-muted-foreground/30" />
-              </Link>
-            </motion.div>
-          )) : (
-            <div className="bg-card/50 rounded-2xl p-6 border border-dashed border-border flex flex-col items-center justify-center text-center">
-              <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center mb-2">
-                <CheckCircle className="w-5 h-5 text-muted-foreground/40" />
-              </div>
-              <p className="text-xs font-medium text-muted-foreground">All caught up for today & tomorrow</p>
+        {/* Upcoming Items List */}
+        <div className="w-full xl:flex-1 flex flex-col min-w-[300px]">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="bg-card rounded-3xl p-6 border border-border flex-1 flex flex-col min-h-[420px] shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">Upcoming</h2>
+              {upcomingItems.length > 0 && <span className="text-[10px] font-bold text-primary uppercase bg-primary/10 px-2 py-1 rounded-full">{upcomingItems.length} items</span>}
             </div>
-          )}
+            <div className="space-y-2 flex-1 overflow-y-auto pr-2 scrollbar-none">
+              {upcomingItems.length > 0 ? upcomingItems.map((item, idx) => (
+                <motion.div key={`${item.type}-${item.id || idx}-${item.dateLabel}`} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 + idx * 0.05 }}>
+                  <Link to={item.path} className="bg-card rounded-2xl p-3 border border-border flex items-center gap-3 hover:bg-primary/5 transition-colors group">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center fill-white ${
+                      item.type === 'habit' ? 'bg-orange-500' : 
+                      item.type === 'task' ? 'bg-primary' : 
+                      'bg-rose-500'}`}
+                    >
+                      {item.type === 'habit' ? <Flame className="w-4 h-4 text-white" /> : 
+                       item.type === 'task' ? <CheckCircle className="w-4 h-4 text-white" /> : 
+                       <TrendingDown className="w-4 h-4 text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate group-hover:text-primary transition-colors">{item.title}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase ">{item.dateLabel} • {item.type} {item.timeLabel ? `• ${item.timeLabel}` : ''}</p>
+                    </div>
+                    {item.type === 'subscription' && (
+                      <p className="text-xs font-bold text-rose-500 min-w-fit pr-1">-{formatCurrency(item.currency !== settings.currency_primary ? (item.currency === 'USD' ? item.amount * settings.uzs_rate : item.amount / settings.uzs_rate) : item.amount, settings.currency_primary)}</p>
+                    )}
+                    <ChevronRight className="w-4 h-4 flex-shrink-0 text-muted-foreground/30" />
+                  </Link>
+                </motion.div>
+              )) : (
+                <div className="bg-card/50 rounded-2xl p-6 border border-dashed border-border flex flex-col items-center justify-center text-center">
+                  <div className="w-10 h-10 bg-muted/20 rounded-full flex items-center justify-center mb-2">
+                    <CheckCircle className="w-5 h-5 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground">All caught up for today & tomorrow</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -57,7 +57,7 @@ export default function FinanceSummary({ expenses, income, settings }: FinanceSu
       </div>
 
       {/* Breakdowns */}
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         {chartData.sort((a,b) => b.value - a.value).map((item, i) => (
           <div key={item.name} className="bg-card rounded-2xl p-4 border border-border flex items-center justify-between">
             <div className="flex items-center gap-3">

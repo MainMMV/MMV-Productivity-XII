@@ -40,10 +40,10 @@ export default function GoalCard({
   };
 
   return (
-    <div className={`bg-card rounded-3xl border border-border overflow-hidden relative transition-all hover:border-primary/30 group shadow-sm hover:shadow-md ${isCompleted ? "opacity-75 grayscale-[0.5]" : ""}`}>
+    <div className={`h-full flex flex-col bg-card rounded-3xl border border-border overflow-hidden relative transition-all hover:border-primary/30 group shadow-sm hover:shadow-md ${isCompleted ? "opacity-75 grayscale-[0.5]" : ""}`}>
       {/* Cover Image */}
       {goal.image_url ? (
-        <div className="h-40 w-full relative overflow-hidden">
+        <div className="h-40 w-full relative overflow-hidden flex-shrink-0">
           <img src={goal.image_url} alt={goal.title} className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-1000 ease-out" />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
           <div className="absolute top-3 right-3 flex gap-1 z-10 backdrop-blur-md bg-background/50 rounded-xl">
@@ -56,10 +56,10 @@ export default function GoalCard({
           </div>
         </div>
       ) : (
-        <div className="h-2 w-full transition-opacity group-hover:opacity-80" style={{ backgroundColor: goal.color || "hsl(var(--primary))" }} />
+        <div className="h-2 w-full transition-opacity group-hover:opacity-80 flex-shrink-0" style={{ backgroundColor: goal.color || "hsl(var(--primary))" }} />
       )}
 
-      <div className={`p-5 ${goal.image_url ? "pt-2" : ""}`}>
+      <div className={`p-5 flex-1 flex flex-col ${goal.image_url ? "pt-2" : ""}`}>
         {!goal.image_url && (
           <div className="flex flex-row-reverse items-start justify-between absolute right-4 top-4">
              <div className="flex gap-1 ml-2">
@@ -86,7 +86,7 @@ export default function GoalCard({
         </div>
 
         {/* Progress Section */}
-        <div className="mb-5">
+        <div className="mb-5 mt-auto">
           <div className="flex items-center justify-between text-xs font-bold mb-2 grayscale-0">
             <span className="text-primary">{pct}% complete</span>
             {isSavings ? (

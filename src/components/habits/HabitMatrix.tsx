@@ -1,4 +1,4 @@
-import { format, eachDayOfInterval, subDays, isSameDay } from "date-fns";
+import { format, eachDayOfInterval, startOfMonth, endOfMonth, addMonths, isSameDay } from "date-fns";
 import { motion } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -9,28 +9,31 @@ interface HabitMatrixProps {
 }
 
 export default function HabitMatrix({ habits, onToggle, dateRange }: HabitMatrixProps) {
+  const start = dateRange?.from || startOfMonth(new Date());
+  const end = dateRange?.to || endOfMonth(addMonths(new Date(), 2));
+
   const days = eachDayOfInterval({
-    start: dateRange?.from || subDays(new Date(), 13),
-    end: dateRange?.to || new Date(),
+    start,
+    end,
   });
 
   return (
-    <div className="bg-card rounded-3xl p-4 border border-border overflow-x-auto scrollbar-none">
+    <div className="bg-card rounded-3xl p-4 border border-border w-full overflow-x-auto scrollbar-none shadow-sm">
       <div className="min-w-max">
         <div className="flex mb-3">
-          <div className="w-24 flex-shrink-0" />
+          <div className="w-32 flex-shrink-0" />
           {days.map((day, i) => (
             <div key={i} className="w-8 flex flex-col items-center">
-              <span className="text-[8px] text-muted-foreground uppercase font-bold">{format(day, "eee")}</span>
-              <span className="text-[10px] font-bold">{format(day, "d")}</span>
+              <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">{format(day, "eee")}</span>
+              <span className="text-xs font-bold mt-0.5">{format(day, "d")}</span>
             </div>
           ))}
         </div>
         <div className="space-y-2">
           {habits.map((habit) => (
             <div key={habit.id} className="flex items-center">
-              <div className="w-24 flex-shrink-0 pr-2">
-                <p className="text-xs font-semibold truncate">{habit.title}</p>
+              <div className="w-32 flex-shrink-0 pr-4">
+                <p className="text-xs font-bold truncate text-foreground">{habit.title}</p>
               </div>
               <div className="flex">
                 {days.map((day, i) => {
@@ -39,27 +42,28 @@ export default function HabitMatrix({ habits, onToggle, dateRange }: HabitMatrix
                   const isToday = isSameDay(day, new Date());
                   
                   return (
-                    <div key={i} className="w-8 flex justify-center">
+                    <div key={i} className="w-8 flex justify-center items-center">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <motion.button
                               whileTap={{ scale: 0.8 }}
                               onClick={() => onToggle(habit, day)}
-                              className={`w-5 h-5 rounded-md transition-all duration-300 ${
+                              className={`w-6 h-6 rounded-lg transition-all duration-300 ${
                                 isCompleted 
-                                  ? "shadow-sm" 
-                                  : "bg-muted/50 border border-border/50"
+                                  ? "shadow-sm scale-110" 
+                                  : "bg-muted/40 border border-border/60 hover:bg-muted/60"
                               }`}
                               style={{ 
                                 backgroundColor: isCompleted ? habit.color || "hsl(var(--primary))" : undefined,
-                                opacity: isToday ? 1 : 0.6,
+                                opacity: isCompleted ? 1 : (isToday ? 1 : 0.6),
                                 cursor: "pointer"
                               }}
                             />
                           </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-[10px]">{habit.title}: {format(day, "MMM d")}</p>
+                          <TooltipContent side="top">
+                            <p className="text-[10px] font-bold">{habit.title}</p>
+                            <p className="text-[10px] text-muted-foreground">{format(day, "MMM d, yyyy")}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

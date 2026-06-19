@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Target } from "lucide-react";
+import { Plus, Target, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -145,10 +145,18 @@ export default function Goals() {
       </motion.div>
 
       {/* Goals list with grid layout possible, but here using card stack */}
-      <AnimatePresence>
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
+      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <AnimatePresence mode="popLayout">
           {filtered.map(goal => (
-            <motion.div key={goal.id} variants={itemAnim} layout>
+            <motion.div 
+              key={goal.id} 
+              variants={itemAnim}
+              initial="hidden"
+              animate="show"
+              exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
+              layout
+              transition={{ ease: (settings as any).animation_timing || "easeOut", duration: 0.3 }}
+            >
               <GoalCard
                 goal={goal}
                 onToggleMilestone={toggleMilestone}
@@ -160,8 +168,8 @@ export default function Goals() {
               />
             </motion.div>
           ))}
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+      </motion.div>
 
       {filtered.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
@@ -189,9 +197,10 @@ export default function Goals() {
               <Label>Type</Label>
               <div className="flex gap-2 mt-1">
                 {["savings", "personal"].map(t => (
-                  <button key={t} onClick={() => setForm(f => ({ ...f, type: t }))}
-                    className={`flex-1 py-2.5 rounded-2xl text-sm font-bold capitalize transition-all border-2 ${form.type === t ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
-                    {t === "savings" ? "💰 Savings" : "🎯 Personal"}
+                  <button key={t} type="button" onClick={() => setForm(f => ({ ...f, type: t }))}
+                    className={`flex-1 py-2.5 rounded-2xl text-sm font-bold capitalize transition-all border-2 flex items-center justify-center gap-1.5 ${form.type === t ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground"}`}>
+                    {t === "savings" ? <Wallet className="w-4 h-4" /> : <Target className="w-4 h-4" />}
+                    {t === "savings" ? "Savings" : "Personal"}
                   </button>
                 ))}
               </div>
