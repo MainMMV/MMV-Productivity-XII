@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '@/lib/useNotifications';
 import { useSettings } from '@/lib/useSettings';
 import { useState, useEffect } from 'react';
+import { DatabaseWakeup } from './DatabaseWakeup';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Home', icon: Home },
@@ -48,6 +49,7 @@ export default function AppLayout() {
         transitionTimingFunction: (settings as any).animation_timing || 'ease'
       }}
     >
+      <DatabaseWakeup />
       {/* Mobile Header Navigation */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-xl z-30 flex-shrink-0">
         <div className="flex items-center gap-2">
