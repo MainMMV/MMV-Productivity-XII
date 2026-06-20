@@ -37,6 +37,7 @@ import { useSettings } from "@/lib/useSettings";
 import { toast } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
+import { playSound } from "@/lib/sounds";
 
 const ALL_HUES = [
   { label: "Red", hue: 0, color: "#ef4444" },
@@ -68,75 +69,6 @@ export default function Settings() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [pwaPlatform, setPwaPlatform] = useState<"android" | "ios">("android");
-  const [regsCount, setRegsCount] = useState<number | null>(null);
-  const [activeTourStep, setActiveTourStep] = useState(0);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  
-  const [adminMessage, setAdminMessage] = useState("");
-  const [isGodModeSending, setIsGodModeSending] = useState(false);
-
-  const handleGodModeBroadcast = async () => {
-    if (!adminMessage.trim()) return toast.error("Write a message to broadcast first!");
-    setIsGodModeSending(true);
-    try {
-      const SUPABASE_SERVICE_ROLE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzanpxZmZncnp3a2x4bGJ3ZGJ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzM0MDQ3NSwiZXhwIjoyMDg4OTE2NDc1fQ.nlQAu3cGjtRRv0SeJ9HkqEZ2MeOtYc6XrIRfHdiQgOI";
-      const res = await fetch('https://ysjzqffgrzwklxlbwdby.supabase.co/auth/v1/admin/users', {
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE}`,
-          'apikey': SUPABASE_SERVICE_ROLE
-        }
-      });
-      const data = await res.json();
-      const usersList = data.users || [];
-      
-      let sentCount = 0;
-      for (const u of usersList) {
-        if (u.email && u.email.endsWith("@telegram.mmv.internal")) {
-           const tgId = u.email.split("@")[0];
-           
-           await fetch(`https://api.telegram.org/bot8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo/sendMessage`, {
-             method: "POST",
-             headers: { "Content-Type": "application/json" },
-             body: JSON.stringify({
-               chat_id: tgId,
-               text: `📣 *SYSTEM NOTIFICATION:*\n\n${adminMessage}`,
-               parse_mode: 'Markdown'
-             })
-           });
-           sentCount++;
-        }
-      }
-      
-      toast.success(`Broadcast sent successfully to ${sentCount} Telegram user(s)!`);
-      setAdminMessage("");
-    } catch (e: any) {
-      toast.error(`Broadcast failed: ${e.message}`);
-    } finally {
-      setIsGodModeSending(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchUserCount = async () => {
-      try {
-        const { data, error } = await supabase.rpc('get_user_count');
-        if (!error && typeof data === 'number') {
-          setRegsCount(data);
-        }
-      } catch (e) {
-        console.error("Error fetching user count", e);
-      }
-    };
-    fetchUserCount();
-  }, []);
-
-  const handleCopyPreset = (key: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    toast.success("Command copied to clipboard!");
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -246,6 +178,27 @@ export default function Settings() {
       }
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const handleResetSettings = () => {
+    if (window.confirm("Are you sure you want to reset all settings to their default values?")) {
+      updateSettings({
+        theme_mode: "system",
+        theme_preset: "default",
+        theme_hue: 258,
+        border_radius_percentage: 35,
+        animation_timing: "ease",
+        container_width: "100%",
+        calendar_start_day: "Sunday",
+        currency_primary: "USD",
+        notifications_enabled: false,
+        tasks_notifications: false,
+        habits_notifications: false,
+        notify_missed: false,
+        sound_notifications_enabled: true,
+      });
+      toast.success("Settings reset to defaults. Remember to save if you want to keep them!");
     }
   };
 
@@ -362,6 +315,49 @@ export default function Settings() {
                   <Icon className="w-4 h-4" /> {label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="mb-6 h-px bg-border w-full" />
+
+          {/* Elegant Custom Theme Presets */}
+          <div className="mb-6">
+            <Label className="text-xs font-bold mb-3 block">Theme Presets</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { val: "default", label: "Default Retro", preview: "bg-amber-50/40 dark:bg-zinc-950 border-border", accent: "bg-[#8b5cf6]" },
+                { val: "slate", label: "Steel Slate", preview: "bg-slate-100 dark:bg-slate-900 border-slate-200", accent: "bg-sky-500" },
+                { val: "sand", label: "Desert Sand", preview: "bg-amber-50/50 dark:bg-amber-950/20 border-orange-200/50", accent: "bg-amber-600" },
+                { val: "mint", label: "Forest Mint", preview: "bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-200/50", accent: "bg-emerald-500" },
+                { val: "obsidian", label: "Midnight Obsidian", preview: "bg-neutral-950 border-neutral-800", accent: "bg-violet-600" }
+              ].map((p) => {
+                const isSelected = (settings as any).theme_preset === p.val || (p.val === "default" && !(settings as any).theme_preset);
+                return (
+                  <button 
+                    key={p.val} 
+                    type="button"
+                    onClick={() => {
+                      updateSettings({ 
+                        theme_preset: p.val,
+                        theme_hue: p.val === "slate" ? 210 : p.val === "sand" ? 34 : p.val === "mint" ? 145 : p.val === "obsidian" ? 265 : 220
+                      });
+                    }}
+                    className={`flex flex-col gap-2 p-3 rounded-2xl border text-left transition-all ${
+                      isSelected 
+                        ? "border-primary bg-primary/5 shadow-md scale-[1.01]" 
+                        : "border-border hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold">{p.label}</span>
+                      <div className={`w-3 h-3 rounded-full ${p.accent}`} />
+                    </div>
+                    <div className={`w-full h-8 rounded-lg border flex items-center justify-end px-2 ${p.preview}`}>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-primary stroke-[3]" />}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -518,8 +514,16 @@ export default function Settings() {
             { key: "tasks_notifications", label: "Task Alerts", desc: "Notify on task due dates" },
             { key: "habits_notifications", label: "Habit Nudges", desc: "Daily reminders to complete habits" },
             { key: "notify_missed", label: "Missed Items Alerts", desc: "Notify when you miss a task/habit/payment" },
+            { key: "sound_notifications_enabled", label: "Sound Effects & Alarms", desc: "Play elegant tones for alerts, tasks, habits & goals",
+              onChange: (e: any) => {
+                updateSettings({ sound_notifications_enabled: e.target.checked });
+                if (e.target.checked) {
+                  playSound("complete");
+                }
+              }
+            },
           ].map(item => (
-            <label key={item.key} className={`flex items-center justify-between cursor-pointer group p-1 -m-1 rounded-xl transition-colors hover:bg-primary/5 ${item.key !== "notifications_enabled" && !settings.notifications_enabled ? "opacity-50 cursor-not-allowed" : ""}`}>
+            <label key={item.key} className={`flex items-center justify-between cursor-pointer group p-1 -m-1 rounded-xl transition-colors hover:bg-primary/5 ${item.key !== "notifications_enabled" && item.key !== "sound_notifications_enabled" && !settings.notifications_enabled ? "opacity-50 cursor-not-allowed" : ""}`}>
               <div className="flex-1 pr-4">
                 <p className="text-sm font-bold group-hover:text-primary transition-colors">{item.label}</p>
                 <p className="text-[10px] text-muted-foreground font-medium">{item.desc}</p>
@@ -527,7 +531,7 @@ export default function Settings() {
               <Switch
                 checked={(settings as any)[item.key]}
                 onCheckedChange={v => item.onChange ? item.onChange({target: {checked: v}}) : updateSettings({ [item.key]: v })}
-                disabled={item.key !== "notifications_enabled" && !settings.notifications_enabled}
+                disabled={item.key !== "notifications_enabled" && item.key !== "sound_notifications_enabled" && !settings.notifications_enabled}
               />
             </label>
           ))}
@@ -562,6 +566,70 @@ export default function Settings() {
                 <span className="text-xs font-bold text-muted-foreground">min</span>
               </div>
             </div>
+          </div>
+
+          {/* Sound Board Test Board */}
+          {settings.sound_notifications_enabled !== false && (
+            <div className="pt-4 border-t border-border">
+              <p className="text-xs font-bold text-muted-foreground uppercase mb-3 text-center tracking-wider">Acoustic Sound Profile Tester</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => playSound("complete")} 
+                  className="rounded-2xl text-xs flex items-center justify-center gap-1.5 h-11 border-border bg-muted/25 hover:bg-primary/5 hover:border-primary/20 transition-all font-bold"
+                >
+                  <span>🔔</span> Chime (Complete)
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => playSound("success")} 
+                  className="rounded-2xl text-xs flex items-center justify-center gap-1.5 h-11 border-border bg-muted/25 hover:bg-primary/5 hover:border-primary/20 transition-all font-bold"
+                >
+                  <span>✨</span> Peaceful (Success)
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => playSound("toggle")} 
+                  className="rounded-2xl text-xs flex items-center justify-center gap-1.5 h-11 border-border bg-muted/25 hover:bg-primary/5 hover:border-primary/20 transition-all font-bold"
+                >
+                  <span>⚡</span> Pop (Toggle)
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => playSound("celebration")} 
+                  className="rounded-2xl text-xs flex items-center justify-center gap-1.5 h-11 border-border bg-muted/25 hover:bg-primary/5 hover:border-primary/20 transition-all font-bold"
+                >
+                  <span>🎉</span> Shimmer (Victory)
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.section>
+
+      {/* Reset Settings */}
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="mb-6">
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <RefreshCw className="w-4 h-4 text-primary" />
+          <h2 className="text-sm font-semibold">Danger Zone</h2>
+        </div>
+        <div className="bg-card rounded-3xl p-5 border border-border shadow-sm">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <Label className="text-sm font-bold text-destructive">Reset All Settings</Label>
+              <p className="text-[10px] text-muted-foreground font-medium mt-1">This will revert all your preferences back to their default values.</p>
+            </div>
+            <Button onClick={handleResetSettings} variant="destructive" className="w-full md:w-auto rounded-xl font-bold flex items-center gap-2">
+              <RefreshCw className="w-4 h-4" /> Reset Settings
+            </Button>
           </div>
         </div>
       </motion.section>

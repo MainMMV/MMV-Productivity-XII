@@ -26,7 +26,8 @@ export default function AddTransactionDialog({ open, onClose, type, onSaved, set
     billing_cycle: "monthly",
     currency: settings.currency_primary || "USD",
     next_billing: getToday(),
-    reminder_time: ""
+    reminder_time: "",
+    custom_days: [] as number[]
   });
 
   async function handleSave() {
@@ -119,12 +120,54 @@ export default function AddTransactionDialog({ open, onClose, type, onSaved, set
                 <Select value={form.billing_cycle} onValueChange={v => setForm(f => ({ ...f, billing_cycle: v }))}>
                   <SelectTrigger className="rounded-xl mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
                     <SelectItem value="yearly">Yearly</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="custom">Custom Days (Weekly)...</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {form.billing_cycle === 'custom' && (
+                <div className="space-y-2">
+                  <Label className="text-xs">Select Days (Starts from Monday)</Label>
+                  <div className="flex gap-1">
+                    {[
+                      { label: "M", val: 1 },
+                      { label: "T", val: 2 },
+                      { label: "W", val: 3 },
+                      { label: "T", val: 4 },
+                      { label: "F", val: 5 },
+                      { label: "S", val: 6 },
+                      { label: "S", val: 0 },
+                    ].map((day) => {
+                      const isSelected = (form.custom_days || []).includes(day.val);
+                      return (
+                        <button
+                          key={day.val}
+                          type="button"
+                          onClick={() => {
+                            const currentDays = form.custom_days || [];
+                            const next = isSelected 
+                              ? currentDays.filter((d: number) => d !== day.val)
+                              : [...currentDays, day.val];
+                            setForm(f => ({ ...f, custom_days: next }));
+                          }}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                            isSelected 
+                              ? "bg-primary text-primary-foreground border-primary" 
+                              : "bg-muted text-muted-foreground border-transparent hover:bg-muted/80"
+                          }`}
+                        >
+                          {day.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label>Next Billing</Label>

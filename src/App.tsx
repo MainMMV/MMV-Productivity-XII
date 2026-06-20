@@ -4,6 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { GoogleAuthProvider } from '@/lib/googleAuth';
 import AppLayout from '@/components/layout/AppLayout';
 
 // Pages
@@ -14,6 +15,8 @@ import Finance from './pages/Finance';
 import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
+import GoogleCalendar from './pages/GoogleCalendar';
+import GoogleNotes from './pages/GoogleNotes';
 
 import { useEffect } from 'react';
 
@@ -48,6 +51,8 @@ const AuthenticatedApp = () => {
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/finance" element={<Finance />} />
         <Route path="/goals" element={<Goals />} />
+        <Route path="/calendar" element={<GoogleCalendar />} />
+        <Route path="/notes" element={<GoogleNotes />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
       </Route>
@@ -59,12 +64,14 @@ const AuthenticatedApp = () => {
 function App() {
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
+      <GoogleAuthProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </GoogleAuthProvider>
     </AuthProvider>
   );
 }

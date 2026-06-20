@@ -82,6 +82,77 @@ export function useSettings() {
 
   }, [settings.theme_hue, settings.border_radius_percentage]);
 
+  // Apply preset theme custom css variables
+  useEffect(() => {
+    const root = document.documentElement;
+    const isDark = settings.theme_mode === "dark" || 
+      (settings.theme_mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    // List of custom design systems
+    const presets: Record<string, {
+      background: string;
+      foreground: string;
+      card: string;
+      border: string;
+      muted: string;
+      secondary: string;
+    }> = {
+      slate: {
+        background: isDark ? "222 47% 7%" : "215 25% 97%",
+        foreground: isDark ? "210 40% 98%" : "222 47% 11%",
+        card: isDark ? "222 47% 11%" : "0 0% 100%",
+        border: isDark ? "217 32% 18%" : "214 32% 91%",
+        muted: isDark ? "217 32% 15%" : "215 25% 92%",
+        secondary: isDark ? "217 32% 15%" : "215 25% 92%"
+      },
+      sand: {
+        background: isDark ? "20 30% 8%" : "36 40% 97%",
+        foreground: isDark ? "36 30% 94%" : "24 60% 15%",
+        card: isDark ? "20 20% 12%" : "36 50% 99%",
+        border: isDark ? "24 20% 18%" : "34 30% 88%",
+        muted: isDark ? "24 20% 14%" : "34 30% 92%",
+        secondary: isDark ? "24 20% 14%" : "34 30% 92%"
+      },
+      mint: {
+        background: isDark ? "150 40% 6%" : "140 20% 98%",
+        foreground: isDark ? "140 30% 96%" : "152 60% 12%",
+        card: isDark ? "150 30% 10%" : "0 0% 100%",
+        border: isDark ? "150 20% 16%" : "140 20% 90%",
+        muted: isDark ? "150 25% 12%" : "140 18% 93%",
+        secondary: isDark ? "150 25% 12%" : "140 18% 93%"
+      },
+      obsidian: {
+        background: isDark ? "240 10% 4.5%" : "240 10% 96%",
+        foreground: isDark ? "0 0% 98%" : "240 10% 4%",
+        card: isDark ? "240 10% 9%" : "0 0% 100%",
+        border: isDark ? "240 6% 14%" : "240 10% 88%",
+        muted: isDark ? "240 6% 11%" : "240 10% 92%",
+        secondary: isDark ? "240 6% 11%" : "240 10% 92%"
+      }
+    };
+
+    const preset = presets[(settings as any).theme_preset];
+    if (preset) {
+      root.style.setProperty("--background", preset.background);
+      root.style.setProperty("--foreground", preset.foreground);
+      root.style.setProperty("--card", preset.card);
+      root.style.setProperty("--card-foreground", preset.foreground);
+      root.style.setProperty("--border", preset.border);
+      root.style.setProperty("--input", preset.border);
+      root.style.setProperty("--muted", preset.muted);
+      root.style.setProperty("--secondary", preset.secondary);
+    } else {
+      root.style.removeProperty("--background");
+      root.style.removeProperty("--foreground");
+      root.style.removeProperty("--card");
+      root.style.removeProperty("--card-foreground");
+      root.style.removeProperty("--border");
+      root.style.removeProperty("--input");
+      root.style.removeProperty("--muted");
+      root.style.removeProperty("--secondary");
+    }
+  }, [settings.theme_mode, (settings as any).theme_preset]);
+
   // Apply dark/light/system mode
   useEffect(() => {
     const root = document.documentElement;

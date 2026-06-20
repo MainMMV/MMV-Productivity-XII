@@ -40,7 +40,14 @@ export default function SubscriptionList({ subscriptions, onRefresh, settings }:
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{sub.title}</p>
               <p className="text-[10px] text-muted-foreground uppercase">
-                {sub.billing_cycle || "Monthly"}
+                {(() => {
+                  if (sub.billing_cycle === 'custom') {
+                    const daysMap: Record<number, string> = { 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat", 0: "Sun" };
+                    const selected = (sub.custom_days || []).map((d: number) => daysMap[d]).filter(Boolean).join(', ');
+                    return `Custom: ${selected || 'days'}`;
+                  }
+                  return sub.billing_cycle || "Monthly";
+                })()}
                 {sub.next_billing && ` • Next: ${new Date(sub.next_billing).toLocaleDateString("en-US")}`}
               </p>
             </div>

@@ -7,6 +7,7 @@ import { CheckCircle, Flame, TrendingDown, TrendingUp, Target, Bell, ChevronRigh
 import { formatCurrency } from "@/lib/utils";
 import { useSettings } from "@/lib/useSettings";
 import { useAuth } from "@/lib/AuthContext";
+import HomeWorkspaceCloud from "@/components/HomeWorkspaceCloud";
 
 const QUOTES = [
   "Small steps every day lead to big results.",
@@ -172,21 +173,6 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* Quick Actions Component */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {[
-          { label: "New Task", icon: CheckCircle, to: "/tasks?new=true", color: "text-primary", bg: "bg-primary/10 hover:bg-primary/20 hover:scale-[1.02]" },
-          { label: "Add Habit", icon: Flame, to: "/habits?new=true", color: "text-orange-500", bg: "bg-orange-500/10 hover:bg-orange-500/20 hover:scale-[1.02]" },
-          { label: "Log Expense", icon: TrendingDown, to: "/finance?new=true", color: "text-rose-500", bg: "bg-rose-500/10 hover:bg-rose-500/20 hover:scale-[1.02]" },
-          { label: "New Goal", icon: Target, to: "/goals?new=true", color: "text-emerald-500", bg: "bg-emerald-500/10 hover:bg-emerald-500/20 hover:scale-[1.02]" },
-        ].map(btn => (
-          <Link key={btn.label} to={btn.to} className={`flex flex-col items-center justify-center py-4 px-2 rounded-3xl transition-all ${btn.bg} border border-[#0000000a] dark:border-[#ffffff0a] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]`}>
-            <btn.icon className={`w-6 h-6 mb-2 ${btn.color}`} />
-            <span className={`text-xs font-bold text-center ${btn.color}`}>{btn.label}</span>
-          </Link>
-        ))}
-      </motion.div>
-
       {/* Habit Score Card */}
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
         className="bg-card rounded-3xl p-5 mb-6 border border-border transition-all active:scale-[0.99] hover:bg-primary/5 hover:border-primary/20 group">
@@ -279,6 +265,14 @@ export default function Home() {
           </motion.div>
         </div>
       </div>
+
+      <HomeWorkspaceCloud 
+        habits={habits}
+        tasks={tasks}
+        expenses={expenses}
+        income={income}
+        goals={goals}
+      />
     </div>
   );
 }

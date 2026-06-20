@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Flame, Check, Trash2, Pencil, MoreVertical, BarChart2, Calendar as CalendarIcon, Target, Activity } from "lucide-react";
+import { Flame, Check, Trash2, Pencil, MoreVertical, BarChart2, Calendar as CalendarIcon, Target, Activity, Award } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -166,6 +166,37 @@ export default function HabitCard({ habit, onToggle, targetDate, onDelete, onEdi
                   <span className="text-sm font-medium">30-Day Rate</span>
                 </div>
                 <span className="text-sm font-bold">{completionRate30d}%</span>
+              </div>
+
+              {/* Habit Streak Milestones */}
+              <div className="pt-2 pb-2 border-t border-dashed border-border/80">
+                <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                  <Award className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Milestones & Badges</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  {[
+                    { target: 3, label: "3d Novice", icon: "🌱", color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+                    { target: 7, label: "7d Bronze", icon: "🥉", color: "bg-amber-600/10 text-amber-700 dark:text-amber-400" },
+                    { target: 30, label: "30d Silver", icon: "🥈", color: "bg-slate-400/10 text-slate-700 dark:text-slate-300" },
+                    { target: 100, label: "100d Gold", icon: "🥇", color: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400" }
+                  ].map(mile => {
+                    const achieved = currentStreak >= mile.target;
+                    return (
+                      <div 
+                        key={mile.target} 
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-xl text-[10px] font-bold transition-all border ${
+                          achieved 
+                            ? `${mile.color} border-current/30` 
+                            : "bg-muted/30 text-muted-foreground/30 border-transparent"
+                        }`}
+                      >
+                        <span className={achieved ? "" : "grayscale opacity-50"}>{mile.icon}</span>
+                        <span className={achieved ? "" : "line-through"}>{mile.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-between">

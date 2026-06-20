@@ -59,7 +59,7 @@ export default function IncomeList({ income, onRefresh, settings, dateRange }: I
         {(() => {
           if (dateRange?.from) {
             const dates = [];
-            let curr = new Date(dateRange.from);
+            const curr = new Date(dateRange.from);
             const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
             
             while (curr <= end) {

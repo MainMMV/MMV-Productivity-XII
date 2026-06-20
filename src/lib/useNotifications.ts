@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useSettings } from './useSettings';
 import { base44 } from '@/api/base44Client';
+import { playSound } from './sounds';
 
 export function useNotifications() {
   const { settings } = useSettings();
@@ -187,6 +188,7 @@ export function useNotifications() {
   }, [settings]);
 
   function sendNotification(title: string, body: string) {
+    playSound("alarm");
     if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
       navigator.serviceWorker.ready.then(registration => {
         registration.showNotification(title, {

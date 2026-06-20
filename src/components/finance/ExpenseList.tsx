@@ -60,7 +60,7 @@ export default function ExpenseList({ expenses, onRefresh, settings, dateRange }
         {(() => {
           if (dateRange?.from) {
             const dates = [];
-            let curr = new Date(dateRange.from);
+            const curr = new Date(dateRange.from);
             const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
             
             while (curr <= end) {

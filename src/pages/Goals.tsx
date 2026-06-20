@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import GoalCard from "@/components/goals/GoalCard";
 import PullToRefresh from "@/components/common/PullToRefresh";
 import { useSettings } from "@/lib/useSettings";
+import { playSound } from "@/lib/sounds";
+import confetti from "canvas-confetti";
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 const EMPTY_FORM = { title: "", description: "", type: "personal", target_amount: "", current_amount: 0, currency: "USD", deadline: "", image_url: "", color: "#8b5cf6", milestones: [], status: "active" };
@@ -82,19 +84,71 @@ export default function Goals() {
 
   async function toggleMilestone(goal: any, index: number) {
     const newMilestones = [...(goal.milestones || [])];
-    newMilestones[index] = { ...newMilestones[index], completed: !newMilestones[index].completed };
-    await base44.entities.Goal.update(goal.id, { milestones: newMilestones });
+    const isCompletedNow = !newMilestones[index].completed;
+    newMilestones[index] = { ...newMilestones[index], completed: isCompletedNow };
+    
+    // Check if ALL milestones are completed now
+    const allDone = newMilestones.every((m: any) => m.completed);
+    const wasAlreadyDone = (goal.milestones || []).every((m: any) => m.completed);
+    
+    let updatedStatus = goal.status;
+    if (allDone && !wasAlreadyDone) {
+      updatedStatus = "completed";
+      playSound("celebration");
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+    } else {
+      playSound("toggle");
+    }
+
+    await base44.entities.Goal.update(goal.id, { 
+      milestones: newMilestones,
+      status: updatedStatus
+    });
     loadGoals();
   }
 
   async function addSavings(goal: any, amount: number) {
     const newAmount = (goal.current_amount || 0) + amount;
-    await base44.entities.Goal.update(goal.id, { current_amount: newAmount });
+    const isSavingsGoalDone = goal.target_amount > 0 && newAmount >= goal.target_amount;
+    const wasAlreadyDone = goal.target_amount > 0 && (goal.current_amount || 0) >= goal.target_amount;
+
+    let updatedStatus = goal.status;
+    if (isSavingsGoalDone && !wasAlreadyDone) {
+      updatedStatus = "completed";
+      playSound("celebration");
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+    } else {
+      playSound("toggle");
+    }
+
+    await base44.entities.Goal.update(goal.id, { 
+      current_amount: newAmount,
+      status: updatedStatus
+    });
     loadGoals();
   }
 
   async function markComplete(goal: any) {
-    await base44.entities.Goal.update(goal.id, { status: goal.status === "completed" ? "active" : "completed" });
+    const isNowCompleted = goal.status !== "completed";
+    await base44.entities.Goal.update(goal.id, { status: isNowCompleted ? "completed" : "active" });
+    if (isNowCompleted) {
+      playSound("celebration");
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+    } else {
+      playSound("toggle");
+    }
     loadGoals();
   }
 

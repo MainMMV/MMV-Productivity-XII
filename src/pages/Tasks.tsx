@@ -15,6 +15,7 @@ import DateRangePicker from "@/components/ui/DateRangePicker";
 import PullToRefresh from "@/components/common/PullToRefresh";
 import { scheduleNotification } from "@/lib/utils";
 import { format } from "date-fns";
+import { playSound } from "@/lib/sounds";
 
 import KanbanBoard from "@/components/tasks/KanbanBoard";
 
@@ -57,8 +58,10 @@ export default function Tasks() {
     if (!form.title.trim()) return;
     if (editTask) {
       await base44.entities.Task.update(editTask.id, form);
+      playSound("toggle");
     } else {
       await base44.entities.Task.create(form);
+      playSound("success");
     }
     if (form.notification_enabled && form.due_date && form.due_time) {
       const triggerTime = `${form.due_date}T${form.due_time}:00`;
@@ -73,6 +76,11 @@ export default function Tasks() {
   async function toggleStatus(task: any) {
     const next = task.status === "todo" ? "in_progress" : task.status === "in_progress" ? "done" : "todo";
     await base44.entities.Task.update(task.id, { status: next });
+    if (next === "done") {
+      playSound("complete");
+    } else {
+      playSound("toggle");
+    }
     loadTasks();
   }
 
@@ -140,7 +148,7 @@ export default function Tasks() {
           {(() => {
             if (dateFilter?.from) {
               const dates = [];
-              let curr = new Date(dateFilter.from);
+              const curr = new Date(dateFilter.from);
               const end = dateFilter.to ? new Date(dateFilter.to) : new Date(dateFilter.from);
               
               while (curr <= end) {

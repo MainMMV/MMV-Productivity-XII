@@ -12,6 +12,7 @@ import HabitMatrix from "@/components/habits/HabitMatrix";
 import HabitCard from "@/components/habits/HabitCard";
 import DateRangePicker from "@/components/ui/DateRangePicker";
 import PullToRefresh from "@/components/common/PullToRefresh";
+import { playSound } from "@/lib/sounds";
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#3b82f6"];
 const EMPTY_FORM = { title: "", color: "#8b5cf6", frequency: "daily", icon: "Star", description: "", custom_days: [] as number[], notification_time: "" };
@@ -76,10 +77,16 @@ export default function Habits() {
     const targetDate = date || new Date();
     const dateStr = [targetDate.getFullYear(), String(targetDate.getMonth() + 1).padStart(2, '0'), String(targetDate.getDate()).padStart(2, '0')].join('-');
     const completions = habit.completions || [];
+    const isNowCompleting = !completions.includes(dateStr);
     const newCompletions = completions.includes(dateStr)
       ? completions.filter((d: string) => d !== dateStr)
       : [...completions, dateStr];
     await base44.entities.Habit.update(habit.id, { completions: newCompletions });
+    if (isNowCompleting) {
+      playSound("complete");
+    } else {
+      playSound("toggle");
+    }
     loadHabits();
   }
 
@@ -153,7 +160,7 @@ export default function Habits() {
             {(() => {
               if (dateRange?.from) {
                 const dates = [];
-                let curr = new Date(dateRange.from);
+                const curr = new Date(dateRange.from);
                 const end = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
                 
                 while (curr <= end) {
