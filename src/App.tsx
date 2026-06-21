@@ -18,6 +18,7 @@ import Notifications from './pages/Notifications';
 import GoogleCalendar from './pages/GoogleCalendar';
 import GoogleNotes from './pages/GoogleNotes';
 import Bookmarks from './pages/Bookmarks';
+import DatabaseGuide from './pages/DatabaseGuide';
 
 import { useEffect } from 'react';
 
@@ -26,7 +27,7 @@ const AuthenticatedApp = () => {
 
   useEffect(() => {
     // If we're inside the popup and Supabase has processed the hash
-    if (window.opener && window.name === 'supabase_oauth') {
+    if (window.opener && window.name === 'oauth_popup') {
       setTimeout(() => {
          window.close();
       }, 500);
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
         <Route path="/calendar" element={<GoogleCalendar />} />
         <Route path="/notes" element={<GoogleNotes />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
+        <Route path="/data" element={<DatabaseGuide />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
       </Route>

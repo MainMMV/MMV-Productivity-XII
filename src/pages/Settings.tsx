@@ -35,7 +35,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/lib/useSettings";
 import { toast } from "react-hot-toast";
-import { supabase } from "@/lib/supabase";
+import { auth, googleProvider } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useAuth } from "@/lib/AuthContext";
 import { playSound } from "@/lib/sounds";
 
@@ -118,18 +119,11 @@ export default function Settings() {
     setAuthMsg("");
     try {
       if (isSignUp) {
-         // Check user limits
-         const { data: count, error: countErr } = await supabase.rpc('get_user_count');
-         if (!countErr && (count as number) >= 3) {
-            throw new Error("Registration limit reached. Maximum of 3 users allowed.");
-         }
-         
-         const { error } = await supabase.auth.signUp({ email, password });
-         if (error) throw error;
-         setAuthMsg("Check your email to confirm registration");
+         await createUserWithEmailAndPassword(auth, email, password);
+         setAuthMsg("Successfully registered! You can now log in.");
+         toast.success("Registered successfully!");
       } else {
-         const { error } = await supabase.auth.signInWithPassword({ email, password });
-         if (error) throw error;
+         await signInWithEmailAndPassword(auth, email, password);
          toast.success("Logged in successfully!");
          setTimeout(() => window.location.reload(), 1000);
       }
@@ -142,40 +136,9 @@ export default function Settings() {
 
   const handleGoogleAuth = async () => {
     try {
-      const { data: count, error: countErr } = await supabase.rpc('get_user_count');
-      if (!countErr && (count as number) >= 3) {
-         toast.error("Registration limit reached. Maximum of 3 users allowed.");
-         return;
-      }
-      
-      // Use popup to prevent PWA from exiting app context
-      const { data, error } = await supabase.auth.signInWithOAuth({ 
-        provider: 'google', 
-        options: { 
-          skipBrowserRedirect: true,
-          redirectTo: window.location.origin
-        } 
-      });
-      if (error) throw error;
-      
-      if (data?.url) {
-        // Open popup
-        const width = 500;
-        const height = 600;
-        const left = window.screenX + (window.outerWidth - width) / 2;
-        const top = window.screenY + (window.outerHeight - height) / 2;
-        window.open(data.url, 'supabase_oauth', `width=${width},height=${height},left=${left},top=${top}`);
-        
-        // Listen for storage changes from the popup
-        const handleStorage = (e: StorageEvent) => {
-          if (e.key && e.key.endsWith('-auth-token')) {
-             window.removeEventListener('storage', handleStorage);
-             // Reload or check auth
-             window.location.reload();
-          }
-        };
-        window.addEventListener('storage', handleStorage);
-      }
+      await signInWithPopup(auth, googleProvider);
+      toast.success("Logged in with Google successfully!");
+      setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
       toast.error(err.message);
     }

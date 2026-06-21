@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup, GoogleAuthProvider as FirebaseAuthProvider, signOut } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
 
 interface GoogleAuthContextType {
@@ -21,7 +22,7 @@ const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/drive.readonly",
   "https://www.googleapis.com/auth/drive.file",
   "https://www.googleapis.com/auth/spreadsheets"
-].join(" ");
+];
 
 export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
@@ -40,18 +41,11 @@ export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) 
     async function loadToken() {
       try {
         setIsLoading(true);
-        // 1. Check for manual/developer token override first for easy developer testing and seamless preview stability
         const overrideToken = localStorage.getItem('google_access_token_override');
         if (overrideToken) {
           setAccessTokenState(overrideToken);
           setIsLoading(false);
           return;
-        }
-
-        // 2. Fetch active Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.provider_token) {
-          setAccessTokenState(session.provider_token);
         }
       } catch (err) {
         console.error("Error loading Google access token:", err);
@@ -62,44 +56,38 @@ export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) 
 
     loadToken();
 
-    // Listen for auth state changes in Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.provider_token) {
-        setAccessTokenState(session.provider_token);
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      // In Firebase, provider tokens are typically only available immediately after sign-in.
+      // So we rely on localStorage to keep the token if they connected.
+      const override = localStorage.getItem('google_access_token_override');
+      if (!override) {
+        setAccessTokenState(null);
       } else {
-        const override = localStorage.getItem('google_access_token_override');
-        if (!override) {
-          setAccessTokenState(null);
-        }
+        setAccessTokenState(override);
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
   const connectGoogle = async () => {
     try {
       setIsLoading(true);
-      // Initiate Google OAuth login request through Supabase with precise scopes
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          skipBrowserRedirect: false,
-          scopes: GOOGLE_SCOPES,
-          redirectTo: window.location.origin,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent'
-          }
-        }
+      
+      GOOGLE_SCOPES.forEach(scope => googleProvider.addScope(scope));
+      googleProvider.setCustomParameters({
+        prompt: 'consent',
+        access_type: 'offline'
       });
 
-      if (error) throw error;
-      if (data?.url) {
-        // Open authorization link
-        window.location.href = data.url;
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = FirebaseAuthProvider.credentialFromResult(result);
+      
+      if (credential?.accessToken) {
+        setAccessToken(credential.accessToken);
+        toast.success("Google connected successfully");
       }
     } catch (e: any) {
       toast.error(`OAuth Initiation failed: ${e.message}`);

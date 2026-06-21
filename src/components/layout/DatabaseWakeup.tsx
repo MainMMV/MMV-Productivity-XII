@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useGoogleAuth } from '@/lib/googleAuth';
 import { googleApi } from '@/lib/googleApi';
-import { Database, FileSpreadsheet, HardDrive, Flame, Check } from 'lucide-react';
+import { FileSpreadsheet, HardDrive, Flame, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, limit } from 'firebase/firestore';
 
 export function DatabaseWakeup() {
   const { accessToken } = useGoogleAuth();
@@ -19,28 +20,23 @@ export function DatabaseWakeup() {
       
       const wakeDatabases = async () => {
         const status: Record<string, 'pending' | 'success' | 'error'> = {
-          supabase: 'pending',
           firebase: 'pending',
           sheets: 'pending',
           drive: 'pending',
         };
         setWakingStatus({...status});
 
-        // 1. Wake Supabase
+        // 1. Wake Firebase
         try {
-          await supabase.from('goals').select('id').limit(1);
-          status.supabase = 'success';
+          // Just make a dummy query to "wake" it
+          await getDocs(limit(collection(db, 'goals'), 1));
+          status.firebase = 'success';
         } catch (e) {
-          status.supabase = 'error';
+          status.firebase = 'error';
         }
         setWakingStatus({...status});
 
-        // 2. Wake Firebase (Simulated verification link)
-        await new Promise(r => setTimeout(r, 400));
-        status.firebase = 'success';
-        setWakingStatus({...status});
-
-        // 3. Wake Google Calendar/Drive/Sheets APIs
+        // 2. Wake Google Calendar/Drive/Sheets APIs
         if (accessToken) {
           try {
             await googleApi.drive.listFiles(accessToken);
@@ -93,10 +89,9 @@ export function DatabaseWakeup() {
           </div>
           
           <div className="flex items-center gap-2.5">
-            <IconStatus icon={Database} label="Supabase" status={wakingStatus.supabase} />
             <IconStatus icon={Flame} label="Firebase" status={wakingStatus.firebase} />
-            <IconStatus icon={FileSpreadsheet} label="Sheets" status={wakingStatus.sheets} />
             <IconStatus icon={HardDrive} label="Drive" status={wakingStatus.drive} />
+            <IconStatus icon={FileSpreadsheet} label="Sheets" status={wakingStatus.sheets} />
           </div>
         </motion.div>
       )}

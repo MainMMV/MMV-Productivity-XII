@@ -11,6 +11,11 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Handle OAuth popup callback
+if (window.opener && window.location.hash.includes('access_token')) {
+  setTimeout(() => window.close(), 1500);
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
