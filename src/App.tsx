@@ -17,6 +17,7 @@ import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import GoogleCalendar from './pages/GoogleCalendar';
 import GoogleNotes from './pages/GoogleNotes';
+import Bookmarks from './pages/Bookmarks';
 
 import { useEffect } from 'react';
 
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
         <Route path="/goals" element={<Goals />} />
         <Route path="/calendar" element={<GoogleCalendar />} />
         <Route path="/notes" element={<GoogleNotes />} />
+        <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
       </Route>

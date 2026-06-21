@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Flame, CheckCircle, Wallet, Target, Settings, ChevronLeft, ChevronRight, Calendar, FileText, Menu, X } from 'lucide-react';
+import { Home, Flame, CheckCircle, Wallet, Target, Settings, ChevronLeft, ChevronRight, Calendar, FileText, Menu, X, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '@/lib/useNotifications';
 import { useSettings } from '@/lib/useSettings';
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { path: '/goals', label: 'Goals', icon: Target },
   { path: '/calendar', label: 'Calendar', icon: Calendar },
   { path: '/notes', label: 'Notes', icon: FileText },
+  { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -42,55 +43,54 @@ export default function AppLayout() {
 
   return (
     <div 
-      className="flex flex-col md:flex-row h-[100dvh] bg-background mx-auto relative overflow-hidden transition-all duration-500 shadow-2xl"
+      className="flex flex-col md:flex-row h-[100dvh] bg-background mx-auto relative overflow-hidden transition-all duration-300 shadow-xl"
       style={{ 
         width: (settings as any).container_width || '100%', 
         maxWidth: '100%',
-        transitionTimingFunction: (settings as any).animation_timing || 'ease'
       }}
     >
       <DatabaseWakeup />
       {/* Mobile Header Navigation */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-xl z-30 flex-shrink-0">
+      <div className="lg:hidden flex items-center justify-between p-4 border-b border-border bg-card/80 backdrop-blur-xl z-30 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Target className="w-4 h-4 text-primary" />
-          </div>
-          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-            MMV Suite
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 -ml-2 text-muted-foreground hover:text-foreground"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <h1 className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 flex items-center gap-1.5">
+            <span className="font-extrabold">MMV</span>
+            <span className="font-light text-muted-foreground text-sm">|</span>
+            <span className="font-bold text-sm">Productivity Hub</span>
           </h1>
         </div>
-        <button 
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 -mr-2 text-muted-foreground hover:text-foreground"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
       </div>
 
       {/* Desktop/Tablet Sidebar */}
       <motion.aside 
         initial={false}
         animate={{ width: isCollapsed ? 80 : 256 }}
-        className="hidden md:flex flex-col bg-card border-r border-border p-4 z-40 relative flex-shrink-0 whitespace-nowrap overflow-hidden"
+        transition={{ duration: 0.2 }}
+        className="hidden lg:flex flex-col bg-card border-r border-border p-4 z-40 relative flex-shrink-0 whitespace-nowrap overflow-hidden"
       >
         <div className={`mb-8 py-4 flex items-center justify-between ${isCollapsed ? 'px-1 flex-col gap-4' : 'px-2'}`}>
           <div className={`${isCollapsed ? 'text-center' : ''} min-w-0 flex items-center gap-2`}>
-            {!isCollapsed && (
-              <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Target className="w-4 h-4 text-primary" />
-              </div>
-            )}
             <div>
-              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 truncate">
-                {isCollapsed ? 'MMV' : 'MMV Suite'}
+              <h1 className="text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 truncate flex items-center gap-1.5">
+                <span className="font-black">MMV</span>
+                {!isCollapsed && (
+                  <>
+                    <span className="font-light text-muted-foreground">|</span>
+                    <span className="font-bold text-sm">Productivity Hub</span>
+                  </>
+                )}
               </h1>
-              {!isCollapsed && <p className="text-[10px] text-muted-foreground font-medium mt-0.5 truncate uppercase tracking-widest">Productivity Hub</p>}
             </div>
           </div>
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-primary hover:text-primary-foreground p-1.5 rounded-full border border-border shadow-xs bg-card hover:bg-primary transition-all duration-300 flex-shrink-0 active:scale-95"
+            className="text-primary hover:text-primary-foreground p-1.5 rounded-full border border-border shadow-xs bg-card hover:bg-primary transition-all duration-200 flex-shrink-0 active:scale-95"
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -133,10 +133,10 @@ export default function AppLayout() {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="h-full w-full max-w-5xl mx-auto md:p-4"
           >
             <Outlet />
@@ -153,23 +153,23 @@ export default function AppLayout() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+              className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
             />
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="md:hidden fixed top-0 left-0 bottom-0 w-3/4 max-w-[300px] border-r border-border bg-card z-50 flex flex-col shadow-2xl"
+              className="lg:hidden fixed top-0 left-0 bottom-0 w-3/4 max-w-[300px] border-r border-border bg-card z-50 flex flex-col shadow-2xl"
             >
               <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Target className="w-4 h-4 text-primary" />
-                  </div>
                   <div>
-                    <h2 className="font-bold text-lg leading-none bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">MMV Suite</h2>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Menu</p>
+                    <h1 className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 flex items-center gap-1.5">
+                      <span className="font-black">MMV</span>
+                      <span className="font-light text-muted-foreground text-sm">|</span>
+                      <span className="font-bold text-sm">Menu</span>
+                    </h1>
                   </div>
                 </div>
                 <button 
