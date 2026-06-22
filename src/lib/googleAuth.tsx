@@ -90,7 +90,11 @@ export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) 
         toast.success("Google connected successfully");
       }
     } catch (e: any) {
-      toast.error(`OAuth Initiation failed: ${e.message}`);
+      if (e.code === 'auth/unauthorized-domain') {
+        toast.error(`Please add ${window.location.hostname} to Authorized Domains in Firebase Console -> Authentication -> Settings.`);
+      } else if (e.code !== 'auth/popup-closed-by-user') {
+        toast.error(`OAuth Initiation failed: ${e.message}`);
+      }
     } finally {
       setIsLoading(false);
     }

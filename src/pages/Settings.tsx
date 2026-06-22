@@ -128,7 +128,15 @@ export default function Settings() {
          setTimeout(() => window.location.reload(), 1000);
       }
     } catch (err: any) {
-      setAuthMsg(err.message);
+      if (err.code === 'auth/invalid-credential') {
+        setAuthMsg("Invalid email or password.");
+      } else if (err.code === 'auth/email-already-in-use') {
+        setAuthMsg("An account with this email already exists.");
+      } else if (err.code === 'auth/weak-password') {
+        setAuthMsg("Password should be at least 6 characters.");
+      } else {
+        setAuthMsg(err.message);
+      }
     } finally {
       setAuthLoading(false);
     }
@@ -140,7 +148,13 @@ export default function Settings() {
       toast.success("Logged in with Google successfully!");
       setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
-      toast.error(err.message);
+      if (err.code === 'auth/unauthorized-domain') {
+        toast.error(`Please add ${window.location.hostname} to Authorized Domains in Firebase Console -> Authentication -> Settings.`);
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        toast.error("Sign in was cancelled.");
+      } else {
+        toast.error(err.message);
+      }
     }
   };
 
