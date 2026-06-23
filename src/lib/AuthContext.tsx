@@ -1,6 +1,8 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
+import { getRedirectResult } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import axios from 'axios';
 
 const AuthContext = createContext<any>(null);
@@ -23,6 +25,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
       setAppPublicSettings({ name: "Local App" });
+      
+      // Catch any auth redirect results first
+      try {
+        await getRedirectResult(auth);
+      } catch (redirectError) {
+        console.error("Auth redirect resolution error:", redirectError);
+      }
+
       await checkUserAuth();
       setIsLoadingPublicSettings(false);
     } catch (appError: any) {

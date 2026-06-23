@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup, GoogleAuthProvider as FirebaseAuthProvider, signOut } from 'firebase/auth';
+import { 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult, 
+  GoogleAuthProvider as FirebaseAuthProvider, 
+  signOut 
+} from 'firebase/auth';
 import { toast } from 'react-hot-toast';
 
 interface GoogleAuthContextType {
@@ -9,6 +15,7 @@ interface GoogleAuthContextType {
   isLoading: boolean;
   isConnected: boolean;
   connectGoogle: () => Promise<void>;
+  connectGoogleRedirect: () => Promise<void>;
   disconnectGoogle: () => Promise<void>;
   saveDeveloperToken: (token: string) => void;
 }
@@ -56,6 +63,21 @@ export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) 
 
     loadToken();
 
+    // Check redirect results on mount in case they signed in with Redirect
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          const credential = FirebaseAuthProvider.credentialFromResult(result);
+          if (credential?.accessToken) {
+            setAccessToken(credential.accessToken);
+            toast.success("Google connected via redirect successfully!");
+          }
+        }
+      })
+      .catch((e) => {
+        console.error("OAuth Redirect Result Error:", e);
+      });
+
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       // In Firebase, provider tokens are typically only available immediately after sign-in.
       // So we rely on localStorage to keep the token if they connected.
@@ -72,15 +94,18 @@ export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) 
     };
   }, []);
 
+  const prepareProvider = () => {
+    GOOGLE_SCOPES.forEach(scope => googleProvider.addScope(scope));
+    googleProvider.setCustomParameters({
+      prompt: 'consent',
+      access_type: 'offline'
+    });
+  };
+
   const connectGoogle = async () => {
     try {
       setIsLoading(true);
-      
-      GOOGLE_SCOPES.forEach(scope => googleProvider.addScope(scope));
-      googleProvider.setCustomParameters({
-        prompt: 'consent',
-        access_type: 'offline'
-      });
+      prepareProvider();
 
       const result = await signInWithPopup(auth, googleProvider);
       const credential = FirebaseAuthProvider.credentialFromResult(result);
@@ -92,9 +117,23 @@ export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) 
     } catch (e: any) {
       if (e.code === 'auth/unauthorized-domain') {
         toast.error(`Please add ${window.location.hostname} to Authorized Domains in Firebase Console -> Authentication -> Settings.`);
+      } else if (e.code === 'auth/popup-blocked') {
+        toast.error("Popup window was blocked by your browser. Try enabling Redirect Mode instead!");
       } else if (e.code !== 'auth/popup-closed-by-user') {
-        toast.error(`OAuth Initiation failed: ${e.message}`);
+        toast.error(`OAuth Popup failed: ${e.message}. Pro-tip: Try using Redirect Mode below.`);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const connectGoogleRedirect = async () => {
+    try {
+      setIsLoading(true);
+      prepareProvider();
+      await signInWithRedirect(auth, googleProvider);
+    } catch (e: any) {
+      toast.error(`OAuth Redirect initiation failed: ${e.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -123,6 +162,7 @@ export const GoogleAuthProvider = ({ children }: { children: React.ReactNode }) 
       isLoading,
       isConnected: !!accessToken,
       connectGoogle,
+      connectGoogleRedirect,
       disconnectGoogle,
       saveDeveloperToken
     }}>

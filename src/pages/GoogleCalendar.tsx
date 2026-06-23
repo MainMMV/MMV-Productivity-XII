@@ -20,15 +20,20 @@ import {
   AlertCircle,
   HelpCircle,
   KeyRound,
-  RefreshCw
+  RefreshCw,
+  Wrench,
+  AlertTriangle,
+  ExternalLink
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 export default function GoogleCalendar() {
-  const { accessToken, connectGoogle, isConnected, saveDeveloperToken, disconnectGoogle } = useGoogleAuth();
+  const { accessToken, connectGoogle, connectGoogleRedirect, isConnected, saveDeveloperToken, disconnectGoogle } = useGoogleAuth();
   const { settings } = useSettings();
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [devTokenInput, setDevTokenInput] = useState("");
   const [showDevTokenForm, setShowDevTokenForm] = useState(false);
 
@@ -54,12 +59,14 @@ export default function GoogleCalendar() {
   const fetchEvents = async () => {
     if (!accessToken) return;
     setIsLoading(true);
+    setApiError(null);
     try {
       const data = await googleApi.calendar.listEvents(accessToken);
       // Filter out canceled events or empty titles
       setEvents(data.filter(e => e.summary));
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setApiError(err.message || String(err));
     } finally {
       setIsLoading(false);
     }
@@ -157,6 +164,29 @@ export default function GoogleCalendar() {
 
   return (
     <div className="px-4 pt-6 pb-24 max-w-7xl mx-auto">
+      {apiError && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-destructive/15 border-2 border-destructive/20 rounded-2xl p-4 mb-6 text-xs text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-destructive-foreground underline decoration-1">Google API Access Forbidden (403 Error)</p>
+              <p className="text-muted-foreground mt-0.5 leading-relaxed">
+                Google Calendar or Tasks APIs have not been enabled in your Google Cloud project (<span className="font-mono font-bold text-foreground">mmv-xii</span>). List operation failed.
+              </p>
+            </div>
+          </div>
+          <Link to="/database-guide" className="shrink-0">
+            <Button size="sm" variant="destructive" className="rounded-xl font-bold gap-1 mt-1 sm:mt-0 text-[11px] h-8 shadow">
+              <Wrench className="w-3.5 h-3.5" /> Fix Integration Error <ExternalLink className="w-3 h-3" />
+            </Button>
+          </Link>
+        </motion.div>
+      )}
+
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Google Calendar</h1>
@@ -201,7 +231,10 @@ export default function GoogleCalendar() {
 
             <div className="flex flex-wrap gap-2 items-center">
               <Button onClick={connectGoogle} className="rounded-xl font-bold bg-[#8b5cf6] text-white hover:bg-[#7c3aed]">
-                Connect Google Account
+                Connect Google (Popup)
+              </Button>
+              <Button onClick={connectGoogleRedirect} variant="outline" className="rounded-xl font-bold border-[#8b5cf6]/30 text-foreground hover:bg-[#8b5cf6]/10">
+                Connect Google (Redirect)
               </Button>
               <span className="text-xs text-muted-foreground px-2">or</span>
               <Button variant="outline" onClick={() => setShowDevTokenForm(!showDevTokenForm)} className="rounded-xl text-xs font-semibold">

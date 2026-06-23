@@ -18,7 +18,10 @@ import {
   Pin,
   RefreshCw,
   FolderOpen,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  Wrench,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -28,6 +31,7 @@ export default function GoogleNotes() {
   // General State
   const [activeTab, setActiveTab] = useState<'docs' | 'keep'>('docs');
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Google Docs state
   const [docsList, setDocsList] = useState<GoogleDriveFile[]>([]);
@@ -68,12 +72,14 @@ export default function GoogleNotes() {
   const fetchDocs = async () => {
     if (!accessToken) return;
     setIsLoading(true);
+    setApiError(null);
     try {
       // Query Google Drive for docs only
       const docs = await googleApi.drive.listFiles(accessToken, "mimeType = 'application/vnd.google-apps.document' and trashed = false");
       setDocsList(docs);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setApiError(err.message || String(err));
     } finally {
       setIsLoading(false);
     }
@@ -150,11 +156,13 @@ export default function GoogleNotes() {
   const fetchKeepNotes = async () => {
     if (!accessToken) return;
     setIsLoading(true);
+    setApiError(null);
     try {
       const notes = await googleApi.keep.listNotes(accessToken);
       setKeepNotes(notes);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setApiError(err.message || String(err));
     } finally {
       setIsLoading(false);
     }
@@ -241,6 +249,29 @@ export default function GoogleNotes() {
           </button>
         </div>
       </div>
+
+      {apiError && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-destructive/15 border-2 border-destructive/20 rounded-2xl p-4 mb-6 text-xs text-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-destructive-foreground underline decoration-1">Google API Access Forbidden (403 Error)</p>
+              <p className="text-muted-foreground mt-0.5 leading-relaxed">
+                Google Drive or Google Docs APIs have not been enabled in your default Google Cloud project (<span className="font-mono font-bold text-foreground">mmv-xii</span>). List operation failed.
+              </p>
+            </div>
+          </div>
+          <Link to="/database-guide" className="shrink-0">
+            <Button size="sm" variant="destructive" className="rounded-xl font-bold gap-1 mt-1 sm:mt-0 text-[11px] h-8 shadow">
+              <Wrench className="w-3.5 h-3.5" /> Fix Integration Error <ExternalLink className="w-3 h-3" />
+            </Button>
+          </Link>
+        </motion.div>
+      )}
 
       {!isConnected ? (
         <div className="bg-card border border-border rounded-3xl p-8 text-center max-w-md mx-auto">

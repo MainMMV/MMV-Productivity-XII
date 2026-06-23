@@ -173,6 +173,32 @@ export default function Home() {
         </div>
       </motion.div>
 
+      {/* Quick Integration Helper Banner */}
+      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-6">
+        <div className="bg-card/80 backdrop-blur-md rounded-2xl p-3 border border-border/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5 text-xs">
+            <span className="flex h-2 w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-muted-foreground">Cloud Sync & OAuth Diagnostics:</span>
+            <span className="font-bold text-foreground">Project mmv-xii Active</span>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+            <Link to="/database-guide" className="shrink-0">
+              <span className="text-[11px] font-bold bg-primary/10 text-primary hover:bg-primary/20 px-2.5 py-1 rounded-xl transition-colors inline-block">
+                Fix 403 / Drive Errors
+              </span>
+            </Link>
+            <Link to="/settings" className="shrink-0">
+              <span className="text-[11px] font-bold bg-muted text-muted-foreground hover:bg-muted/80 border border-border px-2.5 py-1 rounded-xl transition-colors inline-block">
+                Enable Redirect Mode
+              </span>
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Habit Score Card */}
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
         className="bg-card rounded-3xl p-5 mb-6 border border-border transition-all active:scale-[0.99] hover:bg-primary/5 hover:border-primary/20 group">

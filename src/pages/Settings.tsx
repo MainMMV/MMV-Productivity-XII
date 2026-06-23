@@ -36,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { useSettings } from "@/lib/useSettings";
 import { toast } from "react-hot-toast";
 import { auth, googleProvider } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { useAuth } from "@/lib/AuthContext";
 import { playSound } from "@/lib/sounds";
 
@@ -66,6 +66,7 @@ export default function Settings() {
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authMsg, setAuthMsg] = useState("");
+  const [useRedirectMode, setUseRedirectMode] = useState(false);
   
   const [showPassword, setShowPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -144,16 +145,22 @@ export default function Settings() {
 
   const handleGoogleAuth = async () => {
     try {
+      if (useRedirectMode) {
+        toast.loading("Redirecting to Google Secure Login...");
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
       await signInWithPopup(auth, googleProvider);
       toast.success("Logged in with Google successfully!");
       setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
       if (err.code === 'auth/unauthorized-domain') {
         toast.error(`Please add ${window.location.hostname} to Authorized Domains in Firebase Console -> Authentication -> Settings.`);
-      } else if (err.code === 'auth/popup-closed-by-user') {
-        toast.error("Sign in was cancelled.");
+      } else if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+        toast.error("Popup blocked or closed. Please turn on 'Utilize Redirect Mode' below and retry!");
       } else {
-        toast.error(err.message);
+        toast.error(`Auth Error: ${err.message}. Try turning on Redirect Mode below!`);
       }
     }
   };
@@ -263,8 +270,22 @@ export default function Settings() {
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
-                    Continue with Google
+                    {useRedirectMode ? "Continue with Google (Redirect)" : "Continue with Google (Popup)"}
                   </Button>
+
+                  <div className="p-3 bg-muted/40 rounded-2xl border border-border flex items-center justify-between mt-2">
+                    <div className="pr-4">
+                      <p className="text-xs font-bold flex items-center gap-1.5 text-foreground">
+                        <Globe className="w-3.5 h-3.5 text-primary" />
+                        Redirect Login Mode
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Recommended inside security iFrames & sandboxes (prevents POPUP errors).</p>
+                    </div>
+                    <Switch
+                      checked={useRedirectMode}
+                      onCheckedChange={setUseRedirectMode}
+                    />
+                  </div>
                </div>
             </div>
           )}

@@ -1,5 +1,24 @@
 import { motion } from 'framer-motion';
-import { Flame, Cloud, FileSpreadsheet, HardDrive, ShieldCheck, Lock, Activity, Server, LayoutDashboard, Fingerprint, History, Laptop } from 'lucide-react';
+import { 
+  Flame, 
+  Cloud, 
+  FileSpreadsheet, 
+  HardDrive, 
+  ShieldCheck, 
+  Lock, 
+  Activity, 
+  Server, 
+  LayoutDashboard, 
+  Fingerprint, 
+  History, 
+  Laptop,
+  Wrench,
+  AlertTriangle,
+  ExternalLink,
+  CheckCircle2,
+  Settings as SettingsIcon,
+  Globe
+} from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useGoogleAuth } from '@/lib/googleAuth';
 import { Button } from '@/components/ui/button';
@@ -8,6 +27,9 @@ import { Link } from 'react-router-dom';
 export default function DatabaseGuide() {
   const { isAuthenticated, user } = useAuth();
   const { accessToken } = useGoogleAuth();
+
+  // Custom user project ID from configuration 'mmv-xii'
+  const projectId = 'mmv-xii';
 
   return (
     <div className="px-4 py-6 max-w-5xl mx-auto pb-24 space-y-8">
@@ -216,6 +238,112 @@ export default function DatabaseGuide() {
             <p className="text-sm text-muted-foreground">
               Because data rests in Google Firebase, any modifications you make on your smartphone will echo almost instantly to your desktop or tablet view, keeping your focus uninterrupted.
             </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* NEW Professional Integration Diagnostics & Troubleshooter */}
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-card border-2 border-destructive/20 shadow-md rounded-[2rem] p-6 md:p-8 space-y-6"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-destructive/10 text-destructive rounded-xl">
+              <Wrench className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-destructive-foreground">Self-Service Troubleshooter</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Solve Google Cloud API authorization & popup browser blocks.</p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted rounded-full border border-border text-[10px] font-mono text-muted-foreground self-start">
+            PROJECT: <span className="text-primary font-bold">{projectId}</span>
+          </div>
+        </div>
+
+        <div className="bg-muted/30 border border-border rounded-2xl p-4 text-xs text-muted-foreground leading-relaxed">
+          <p className="font-bold text-foreground mb-1 flex items-center gap-1">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Why do I see 403 Forbidden or Popup errors?
+          </p>
+          Because of Google Cloud security protocols, if you set up a custom workspace project (<span className="font-mono bg-border px-1.5 py-0.5 rounded text-foreground font-bold">{projectId}</span>), you must explicitly activate corresponding Google API access points. In addition, browser sandbox policies may block popups. Open the sections below to configure your console in one click:
+        </div>
+
+        <div className="space-y-4 pt-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">1. One-Click Developer Console API Activations</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              {
+                title: "Enable Google Drive API",
+                desc: "Resolves Drive 403 errors. Click to authorize your project to read and list Note objects.",
+                url: `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=${projectId}`,
+                badge: "Drive Integration"
+              },
+              {
+                title: "Enable Google Docs API",
+                desc: "Resolves Docs 403 errors. Click to authorize document editing templates.",
+                url: `https://console.developers.google.com/apis/api/docs.googleapis.com/overview?project=${projectId}`,
+                badge: "Docs Integration"
+              },
+              {
+                title: "Enable Google Sheets API",
+                desc: "Allows automated finance exports to export spreadsheets in real-time.",
+                url: `https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=${projectId}`,
+                badge: "Export System"
+              },
+              {
+                title: "Enable Google Tasks & Calendar",
+                desc: "Integrates direct calendar notifications and task list synchronization.",
+                url: `https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=${projectId}`,
+                badge: "Sync Engine"
+              }
+            ].map((api, idx) => (
+              <div key={idx} className="bg-muted/20 border border-border rounded-2xl p-4 flex flex-col justify-between hover:border-primary/20 hover:bg-primary/[0.01] transition-all">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">{api.title}</span>
+                    <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">{api.badge}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{api.desc}</p>
+                </div>
+                <div className="pt-4">
+                  <a 
+                    href={api.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full"
+                  >
+                    <Button variant="outline" size="sm" className="w-full text-[11px] h-9 gap-1.5 rounded-xl border-border hover:bg-primary/5 hover:text-primary hover:border-primary/25">
+                      Open Console in {projectId} <ExternalLink className="w-3 h-3" />
+                    </Button>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-border space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">2. COOP Popup & "Assertion failed" Workaround</h3>
+          
+          <div className="bg-muted/10 border border-border rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1 max-w-xl">
+              <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-emerald-500" />
+                Turn on Redirect Authentication Mode
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                If your browser security setup or iFrame prevents the popups from returning information, go to <strong>Settings</strong>, check <strong>Redirect Login Mode</strong>, and sign in. Instead of opening a popup, the browser will perform a safe, standard, sandboxed redirect handshake.
+              </p>
+            </div>
+            <Link to="/settings" className="w-full md:w-auto shrink-0">
+              <Button size="sm" className="w-full md:w-auto h-9 gap-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[11px] shadow">
+                <SettingsIcon className="w-3.5 h-3.5" /> Configure Settings
+              </Button>
+            </Link>
           </div>
         </div>
       </motion.div>
