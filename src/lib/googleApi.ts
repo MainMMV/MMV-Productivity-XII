@@ -61,8 +61,7 @@ export const googleApi = {
         return data.items || [];
       } catch (err: any) {
         console.error("Error listing tasks:", err);
-        toast.error("Could not fetch Google Tasks. Please verify auth token.");
-        return [];
+        throw err;
       }
     },
     createTask: async (token: string, title: string, notes: string = "", dueDate?: string, listId: string = "@default"): Promise<GoogleTask | null> => {
@@ -142,8 +141,7 @@ export const googleApi = {
         return data.items || [];
       } catch (err: any) {
         console.error("Error listing calendar events:", err);
-        toast.error("Failed to load Google Calendar entries");
-        return [];
+        throw err;
       }
     },
     createEvent: async (token: string, summary: string, description: string, startTime: string, endTime: string, location?: string): Promise<GoogleCalendarEvent | null> => {
@@ -200,7 +198,7 @@ export const googleApi = {
         return data.files || [];
       } catch (err: any) {
         console.error("Error listing files from Google Drive:", err);
-        return [];
+        throw err;
       }
     },
     createFile: async (token: string, name: string, content: string, mimeType: string = "application/json"): Promise<any | null> => {

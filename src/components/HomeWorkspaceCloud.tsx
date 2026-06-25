@@ -23,7 +23,9 @@ import {
   DownloadCloud,
   Share2,
   Check,
-  AlertCircle
+  AlertCircle,
+  ExternalLink,
+  AlertTriangle
 } from 'lucide-react';
 
 interface HomeWorkspaceCloudProps {
@@ -38,6 +40,12 @@ export default function HomeWorkspaceCloud({ habits, tasks, expenses, income, go
   const { accessToken, connectGoogle, isConnected, disconnectGoogle } = useGoogleAuth();
   
   const [isLoading, setIsLoading] = useState(false);
+
+  // --- API Diagnostics State ---
+  const [tasksError, setTasksError] = useState<string | null>(null);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [driveError, setDriveError] = useState<string | null>(null);
+  const [keepError, setKeepError] = useState<string | null>(null);
 
   // --- 1. Tasks state ---
   const [googleTasks, setGoogleTasks] = useState<GoogleTask[]>([]);
@@ -68,26 +76,51 @@ export default function HomeWorkspaceCloud({ habits, tasks, expenses, income, go
   const loadAllCloudData = async () => {
     if (!accessToken) return;
     setIsLoading(true);
+    setTasksError(null);
+    setCalendarError(null);
+    setDriveError(null);
+    setKeepError(null);
+
+    // Load Tasks
     try {
       const liveTasks = await googleApi.tasks.listTasks(accessToken);
       setGoogleTasks(liveTasks.slice(0, 5));
+    } catch (e: any) {
+      console.error("Tasks synchronization issue:", e);
+      setTasksError(e.message || String(e));
+    }
 
+    // Load Calendar
+    try {
       const liveEvents = await googleApi.calendar.listEvents(accessToken);
       setCalendarEvents(liveEvents.slice(0, 3));
+    } catch (e: any) {
+      console.error("Calendar synchronization issue:", e);
+      setCalendarError(e.message || String(e));
+    }
 
+    // Load Drive / Docs
+    try {
       const liveDocs = await googleApi.drive.listFiles(accessToken, "mimeType = 'application/vnd.google-apps.document' and trashed = false");
       setDocsList(liveDocs.slice(0, 5));
       if (liveDocs.length > 0 && !selectedDocId) {
         setSelectedDocId(liveDocs[0].id);
       }
+    } catch (e: any) {
+      console.error("Drive/Docs synchronization issue:", e);
+      setDriveError(e.message || String(e));
+    }
 
+    // Load Keep fallback
+    try {
       const liveNotes = await googleApi.keep.listNotes(accessToken);
       setKeepNotes(liveNotes.slice(0, 4));
-    } catch (e) {
-      console.error("Cloud synchronization issues:", e);
-    } finally {
-      setIsLoading(false);
+    } catch (e: any) {
+      console.error("Keep synchronization issue:", e);
+      setKeepError(e.message || String(e));
     }
+
+    setIsLoading(false);
   };
 
   // --- ACT 1: CREATE GOOGLE TASK ---
@@ -270,6 +303,39 @@ Generated: ${new Date().toLocaleString()}
     }
   };
 
+  const renderApiErrorTroubleshooter = (error: string | null, apiName: string, consoleLink: string) => {
+    if (!error) return null;
+    
+    const isDisabledError = error.toLowerCase().includes("disabled") || 
+                            error.toLowerCase().includes("has not been used") ||
+                            error.toLowerCase().includes("403") ||
+                            error.toLowerCase().includes("restricted") ||
+                            error.toLowerCase().includes("forbidden");
+
+    return (
+      <div className="mt-2 p-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-[10px] text-destructive-foreground flex flex-col gap-1">
+        <div className="flex items-start gap-1.5 font-bold text-red-500">
+          <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+          <span>
+            {isDisabledError 
+              ? `${apiName} API is disabled on your GCP project.`
+              : `Connection issue: ${error.substring(0, 80)}...`}
+          </span>
+        </div>
+        {isDisabledError && (
+          <a 
+            href={consoleLink} 
+            target="_blank" 
+            referrerPolicy="no-referrer" 
+            className="mt-1 inline-flex items-center gap-1 font-extrabold text-blue-500 hover:underline hover:text-blue-600"
+          >
+            Click to enable {apiName} API <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="mt-8 bg-card border border-border rounded-3xl p-6 shadow-sm overflow-hidden">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-3 pb-4 border-b border-border/60">
@@ -319,7 +385,9 @@ Generated: ${new Date().toLocaleString()}
               </div>
 
               <div className="space-y-1.5 mb-3 max-h-[140px] overflow-y-auto pr-1">
-                {googleTasks.length === 0 ? (
+                {tasksError ? (
+                  renderApiErrorTroubleshooter(tasksError, "Google Tasks", "https://console.developers.google.com/apis/api/tasks.googleapis.com/overview?project=mmv-xii")
+                ) : googleTasks.length === 0 ? (
                   <p className="text-[10px] text-muted-foreground py-2 text-center font-medium">Default list is empty</p>
                 ) : (
                   googleTasks.map(t => (
@@ -362,7 +430,9 @@ Generated: ${new Date().toLocaleString()}
               </div>
 
               <div className="space-y-1.5 mb-3 max-h-[140px] overflow-y-auto pr-1">
-                {calendarEvents.length === 0 ? (
+                {calendarError ? (
+                  renderApiErrorTroubleshooter(calendarError, "Google Calendar", "https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=mmv-xii")
+                ) : calendarEvents.length === 0 ? (
                   <p className="text-[10px] text-muted-foreground py-4 text-center font-medium">No events on primary list</p>
                 ) : (
                   calendarEvents.map(evt => {
@@ -417,7 +487,9 @@ Generated: ${new Date().toLocaleString()}
                   Choose an active document inside your Google Drive workspace, and immediately commit your current stats standups.
                 </p>
 
-                {docsList.length > 0 ? (
+                {driveError ? (
+                  renderApiErrorTroubleshooter(driveError, "Google Drive", "https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=mmv-xii")
+                ) : docsList.length > 0 ? (
                   <div className="space-y-1">
                     <label className="text-[9px] font-extrabold text-muted-foreground block">Select target document:</label>
                     <select 

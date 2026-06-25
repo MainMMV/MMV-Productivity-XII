@@ -24,7 +24,8 @@ const firebaseConfig = import.meta.env.VITE_FIREBASE_API_KEY ? {
 } : userConfig;
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || "ai-studio-775dcb08-05ba-4085-aa0d-9459b11b99ba";
+const db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 

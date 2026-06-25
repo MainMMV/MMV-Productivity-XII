@@ -121,8 +121,9 @@ export default function Settings() {
     try {
       if (isSignUp) {
          await createUserWithEmailAndPassword(auth, email, password);
-         setAuthMsg("Successfully registered! You can now log in.");
+         setAuthMsg("Successfully registered! Syncing your account...");
          toast.success("Registered successfully!");
+         setTimeout(() => window.location.reload(), 1000);
       } else {
          await signInWithEmailAndPassword(auth, email, password);
          toast.success("Logged in successfully!");

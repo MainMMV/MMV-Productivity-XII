@@ -45,7 +45,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      
+      const mePromise = base44.auth.me();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Auth check timed out")), 5000)
+      );
+
+      const currentUser = await Promise.race([mePromise, timeoutPromise]);
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);

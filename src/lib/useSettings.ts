@@ -183,7 +183,8 @@ export function useSettings() {
       }
     } catch (e) {}
 
-    try {
+    // Race database operations against a 4-second timeout to prevent infinite hanging
+    const dbLoadPromise = (async () => {
       const list = await base44.entities.UserSettings.list();
       if (list && list.length > 0) {
         const dbSettings = { ...DEFAULT_SETTINGS, ...list[0] };
@@ -195,8 +196,16 @@ export function useSettings() {
         const created = await base44.entities.UserSettings.create(localSettings);
         setSettingsId(created.id);
       }
+    })();
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Database load timed out")), 4000)
+    );
+
+    try {
+      await Promise.race([dbLoadPromise, timeoutPromise]);
     } catch (e) {
-      console.log("No DB settings found (not logged in), using local/defaults");
+      console.log("Database settings load timed out or failed, utilizing local settings fallback:", e);
     } finally {
       setLoading(false);
     }
