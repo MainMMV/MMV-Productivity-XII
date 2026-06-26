@@ -7,13 +7,18 @@ export const setAuthState = (isAuth: boolean) => {
   isAuthenticated = isAuth;
 };
 
+// Listen to firebase auth changes globally to keep isAuthenticated in sync
+auth.onAuthStateChanged(user => {
+  isAuthenticated = !!user;
+});
+
 const getLocalList = (name: string) => JSON.parse(localStorage.getItem(`local_${name}`) || '[]');
 const saveLocalList = (name: string, data: any[]) => localStorage.setItem(`local_${name}`, JSON.stringify(data));
 
 function createEntity(tableName: string) {
   return {
     list: async (orderByField?: string, limitCount?: number) => {
-      if (!isAuthenticated || !auth.currentUser) {
+      if (!auth.currentUser) {
         let list = getLocalList(tableName);
         if (orderByField) {
           const desc = orderByField.startsWith('-');
@@ -29,44 +34,46 @@ function createEntity(tableName: string) {
       }
       
       try {
-        let q = query(collection(db, tableName), where('userId', '==', auth.currentUser.uid));
-        
+        const q = query(collection(db, tableName), where('userId', '==', auth.currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        let results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
         if (orderByField) {
           const desc = orderByField.startsWith('-');
-          q = query(q, fsOrderBy(desc ? orderByField.slice(1) : orderByField, desc ? 'desc' : 'asc'));
+          const key = desc ? orderByField.slice(1) : orderByField;
+          results.sort((a: any, b: any) => {
+            if (a[key] < b[key]) return desc ? 1 : -1;
+            if (a[key] > b[key]) return desc ? -1 : 1;
+            return 0;
+          });
         }
         if (limitCount) {
-          q = query(q, fsLimit(limitCount));
+          results = results.slice(0, limitCount);
         }
-        
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return results;
       } catch (error) {
         console.error(`Error in list ${tableName}:`, error);
         return [];
       }
     },
     filter: async (filters: any) => {
-      if (!isAuthenticated || !auth.currentUser) {
+      if (!auth.currentUser) {
         const list = getLocalList(tableName);
         return list.filter((item: any) => Object.entries(filters).every(([k, v]) => item[k] === v));
       }
       
       try {
-        let q = query(collection(db, tableName), where('userId', '==', auth.currentUser.uid));
-        for (const [k, v] of Object.entries(filters)) {
-          q = query(q, where(k, '==', v));
-        }
-        
+        const q = query(collection(db, tableName), where('userId', '==', auth.currentUser.uid));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return results.filter((item: any) => Object.entries(filters).every(([k, v]) => item[k] === v));
       } catch (error) {
         console.error(`Error in filter ${tableName}:`, error);
         return [];
       }
     },
     create: async (payload: any) => {
-      if (!isAuthenticated || !auth.currentUser) {
+      if (!auth.currentUser) {
         const list = getLocalList(tableName);
         const id = crypto.randomUUID?.() || Date.now().toString();
         const newItem = { id, created_at: new Date().toISOString(), ...payload };
@@ -89,7 +96,7 @@ function createEntity(tableName: string) {
       }
     },
     update: async (id: string, diff: any) => {
-      if (!isAuthenticated || !auth.currentUser) {
+      if (!auth.currentUser) {
         const list = getLocalList(tableName);
         const idx = list.findIndex((i: any) => i.id === id);
         if (idx !== -1) {
@@ -112,7 +119,7 @@ function createEntity(tableName: string) {
       }
     },
     delete: async (id: string) => {
-      if (!isAuthenticated || !auth.currentUser) {
+      if (!auth.currentUser) {
         const list = getLocalList(tableName);
         saveLocalList(tableName, list.filter((i: any) => i.id !== id));
         return { success: true };

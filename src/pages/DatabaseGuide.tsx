@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Flame, 
@@ -17,12 +18,20 @@ import {
   ExternalLink,
   CheckCircle2,
   Settings as SettingsIcon,
-  Globe
+  Globe,
+  Database,
+  Save,
+  RefreshCw,
+  FileCode,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useGoogleAuth } from '@/lib/googleAuth';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { googleApi } from '@/lib/googleApi';
+import { toast } from 'react-hot-toast';
 
 export default function DatabaseGuide() {
   const { isAuthenticated, user } = useAuth();
@@ -30,6 +39,124 @@ export default function DatabaseGuide() {
 
   // Custom user project ID from configuration 'mmv-xii'
   const projectId = 'mmv-xii';
+
+  // --- Google Drive Real-time JSON Database Editor State ---
+  const [folderId, setFolderId] = useState<string | null>(null);
+  const [fileId, setFileId] = useState<string | null>(null);
+  const [jsonString, setJsonString] = useState<string>("");
+  const [isValidJson, setIsValidJson] = useState<boolean>(true);
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isLoadingDriveDb, setIsLoadingDriveDb] = useState<boolean>(false);
+  const [driveLogs, setDriveLogs] = useState<Array<{ id: string; time: string; action: string; type: 'info' | 'success' | 'error' }>>([]);
+
+  const addDriveLog = (action: string, type: 'info' | 'success' | 'error' = 'info') => {
+    const newLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      time: new Date().toLocaleTimeString(),
+      action,
+      type
+    };
+    setDriveLogs(prev => [newLog, ...prev]);
+  };
+
+  useEffect(() => {
+    if (accessToken) {
+      initializeDriveDb();
+    }
+  }, [accessToken]);
+
+  const initializeDriveDb = async () => {
+    if (!accessToken) return;
+    setIsLoadingDriveDb(true);
+    addDriveLog("Connecting to Google Drive API...", "info");
+    try {
+      // 1. Find or create folder "MMV XII"
+      const fId = await googleApi.drive.findOrCreateFolder(accessToken, "MMV XII");
+      setFolderId(fId);
+      addDriveLog(`Drive folder 'MMV XII' verified (ID: ${fId.slice(0, 8)}...)`, "success");
+
+      // 2. Find or create database.json inside MMV XII
+      const fileData = await googleApi.drive.findOrCreateDatabaseFile(accessToken, fId, "database.json");
+      setFileId(fileData.id);
+      const strContent = JSON.stringify(fileData.content, null, 2);
+      setJsonString(strContent);
+      setIsValidJson(true);
+      setJsonError(null);
+      addDriveLog(`Database loaded from 'database.json' (ID: ${fileData.id.slice(0, 8)}...)`, "success");
+    } catch (err: any) {
+      console.error(err);
+      addDriveLog(`Initialization failed: ${err.message || 'Unknown error'}`, "error");
+      toast.error("Could not sync Google Drive database.");
+    } finally {
+      setIsLoadingDriveDb(false);
+    }
+  };
+
+  const handleJsonChange = (val: string) => {
+    setJsonString(val);
+    if (!val.trim()) {
+      setIsValidJson(true);
+      setJsonError(null);
+      return;
+    }
+    try {
+      JSON.parse(val);
+      setIsValidJson(true);
+      setJsonError(null);
+    } catch (e: any) {
+      setIsValidJson(false);
+      setJsonError(e.message);
+    }
+  };
+
+  const formatJson = () => {
+    try {
+      const parsed = JSON.parse(jsonString);
+      const formatted = JSON.stringify(parsed, null, 2);
+      setJsonString(formatted);
+      setIsValidJson(true);
+      setJsonError(null);
+      addDriveLog("Formatted JSON content locally", "info");
+      toast.success("Formatted successfully!");
+    } catch (e: any) {
+      toast.error("Cannot format: invalid JSON structure.");
+    }
+  };
+
+  const saveJsonToDrive = async () => {
+    if (!accessToken || !fileId) {
+      toast.error("Drive connection is not fully initialized.");
+      return;
+    }
+    if (!isValidJson) {
+      toast.error("Cannot save invalid JSON to Google Drive.");
+      return;
+    }
+
+    setIsSyncing(true);
+    addDriveLog("Syncing local changes to Google Drive...", "info");
+    try {
+      const parsed = JSON.parse(jsonString);
+      parsed.lastEditedTime = new Date().toISOString();
+      const contentToSave = JSON.stringify(parsed, null, 2);
+
+      const success = await googleApi.drive.updateFileContent(accessToken, fileId, contentToSave);
+      if (success) {
+        setJsonString(contentToSave);
+        addDriveLog("Database synchronized and updated successfully on Google Drive", "success");
+        toast.success("Database synchronized with Google Drive!");
+      } else {
+        throw new Error("Update response failed.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      addDriveLog(`Sync failed: ${err.message || 'Unknown error'}`, "error");
+      toast.error("Sync failed.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <div className="px-4 py-6 max-w-5xl mx-auto pb-24 space-y-8">
@@ -185,6 +312,160 @@ export default function DatabaseGuide() {
           </div>
         </motion.div>
       </div>
+
+      {/* --- Google Drive Real-time JSON Database Control Section --- */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="bg-card border border-border shadow-md rounded-[2rem] p-6 md:p-8 space-y-6"
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-blue-500/10 text-blue-500 rounded-xl">
+              <Database className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Google Drive Real-Time JSON Database</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Edit files on Google Drive real-time and manage cloud JSON nodes.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-full tracking-wider ${accessToken ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
+              {accessToken ? "Connected" : "Disconnected"}
+            </span>
+            {accessToken && (
+              <Button size="sm" variant="outline" onClick={initializeDriveDb} disabled={isLoadingDriveDb} className="h-8 rounded-lg text-xs gap-1">
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingDriveDb ? 'animate-spin' : ''}`} /> Reload
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {!accessToken ? (
+          <div className="bg-muted/10 border border-dashed border-border rounded-2xl p-8 text-center space-y-4">
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto text-muted-foreground">
+              <HardDrive className="w-6 h-6" />
+            </div>
+            <div className="max-w-md mx-auto space-y-2">
+              <h3 className="font-bold text-sm text-foreground">Google Drive Database is Not Connected</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Connect your Google Account in the application settings first to enable real-time database JSON editing. This will auto-generate the workspace folder <strong className="font-mono text-primary font-bold">MMV XII</strong> inside your Drive!
+              </p>
+            </div>
+            <Link to="/settings">
+              <Button size="sm" className="rounded-xl mt-2 bg-blue-500 hover:bg-blue-600 text-white shadow-sm">
+                Go to Settings & Link Account
+              </Button>
+            </Link>
+          </div>
+        ) : isLoadingDriveDb ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+            <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-semibold animate-pulse">Initializing MMV XII Workspace Drive Node...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left side: Code Editor */}
+            <div className="lg:col-span-2 space-y-3 flex flex-col">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <FileCode className="w-4 h-4 text-blue-500" />
+                  <span className="text-xs font-bold font-mono">MMV XII/database.json</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${isValidJson ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                    {isValidJson ? (
+                      <>
+                        <Check className="w-3 h-3" /> Valid JSON
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-3 h-3" /> Invalid Syntax
+                      </>
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="relative flex-1 min-h-[300px] rounded-2xl overflow-hidden border border-border bg-slate-950 p-2 font-mono text-xs text-slate-100 shadow-inner group">
+                <textarea
+                  value={jsonString}
+                  onChange={(e) => handleJsonChange(e.target.value)}
+                  className="w-full h-full min-h-[320px] bg-transparent outline-none border-none resize-none p-3 font-mono text-xs leading-relaxed text-emerald-400 focus:ring-0 select-text cursor-text"
+                  placeholder='{\n  "tasks": []\n}'
+                  spellCheck="false"
+                />
+              </div>
+
+              {jsonError && (
+                <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 p-3 rounded-xl text-[11px] font-mono whitespace-pre-wrap">
+                  {jsonError}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button 
+                  size="sm" 
+                  onClick={saveJsonToDrive} 
+                  disabled={isSyncing || !isValidJson}
+                  className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white shadow font-bold text-xs gap-1.5 h-10 px-4"
+                >
+                  <Save className="w-4 h-4" /> {isSyncing ? "Saving & Syncing..." : "Sync Changes to Drive"}
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={formatJson}
+                  className="rounded-xl font-bold text-xs h-10 px-4"
+                >
+                  Format JSON
+                </Button>
+              </div>
+            </div>
+
+            {/* Right side: Control Logs */}
+            <div className="space-y-3 flex flex-col h-full">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Database Control Section</span>
+                <span className="text-[10px] text-muted-foreground font-mono">Real-Time Actions</span>
+              </div>
+
+              <div className="flex-1 min-h-[380px] bg-muted/25 border border-border rounded-2xl p-4 flex flex-col min-w-0">
+                <div className="text-[11px] text-muted-foreground border-b border-border pb-2 mb-3 flex items-center justify-between flex-shrink-0">
+                  <span className="font-bold text-foreground">Action Timeline</span>
+                  <span>Active Session</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[320px]">
+                  {driveLogs.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-center text-muted-foreground/50 py-8 text-xs">
+                      No actions performed yet.
+                    </div>
+                  ) : (
+                    driveLogs.map((log) => (
+                      <div key={log.id} className="text-xs border-b border-muted/50 pb-2 leading-relaxed">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className={`font-bold text-[10px] ${
+                            log.type === 'success' ? 'text-emerald-500' :
+                            log.type === 'error' ? 'text-rose-500' :
+                            'text-blue-500'
+                          }`}>
+                            {log.type.toUpperCase()}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-mono">{log.time}</span>
+                        </div>
+                        <p className="text-muted-foreground font-medium break-words text-[11px]">{log.action}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
 
       <motion.div 
         initial={{ opacity: 0, y: 10 }}

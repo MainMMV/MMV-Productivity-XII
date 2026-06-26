@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Bell, AlertCircle, Clock, CheckCircle, TrendingDown, Flame, Check } from "lucide-react";
+import { ArrowLeft, Bell, AlertCircle, Clock, CheckCircle, TrendingDown, Flame, Check, Play } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useSettings } from "@/lib/useSettings";
 import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/common/PullToRefresh";
+import { toast } from "react-hot-toast";
 
 export default function Notifications() {
   const { settings } = useSettings();
@@ -14,6 +15,7 @@ export default function Notifications() {
   const [habits, setHabits] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [permission, setPermission] = useState<string>("default");
   
   // Track read state via clear time to keep it simple, or dismissed IDs
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
@@ -22,7 +24,48 @@ export default function Notifications() {
     const saved = localStorage.getItem("dismissed_notifications");
     if (saved) setDismissedIds(JSON.parse(saved));
     loadData();
+
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPermission(Notification.permission);
+    }
   }, []);
+
+  const triggerChromeNotification = async () => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      let currentPerm = Notification.permission;
+      if (currentPerm === "default") {
+        currentPerm = await Notification.requestPermission();
+        setPermission(currentPerm);
+      }
+      
+      if (currentPerm === "granted") {
+        // Trigger Chrome Native OS Notification
+        new Notification("Subscription Payment Due (Chrome)", {
+          body: "Your Spotify Pro subscription ($9.99) payment is due today.",
+          tag: "subscription-payment-reminder",
+          requireInteraction: true
+        });
+
+        // Add corresponding item into the database so it goes to Notification section
+        const todayStr = new Date().toISOString().split("T")[0];
+        await base44.entities.Subscription.create({
+          title: "Spotify Pro (Chrome Auto-Trigger)",
+          amount: 9.99,
+          currency: "USD",
+          billing_cycle: "monthly",
+          next_billing: todayStr,
+          is_active: true
+        });
+
+        toast.success("Pregenerated notification sent & loaded in app!");
+        loadData();
+      } else {
+        toast.error("Enable browser notifications to run the native simulator.");
+      }
+    } else {
+      toast.error("This browser doesn't support system notifications.");
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -114,6 +157,33 @@ export default function Notifications() {
             </Button>
           )}
         </div>
+
+        {/* Chrome Native Notification Trigger Center */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-3xl border border-blue-500/10 bg-blue-500/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 text-blue-500">
+              <Bell className="w-5 h-5 animate-bounce" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Chrome Notification Center Integrator</p>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-[450px]">
+                Triggers a native Chrome OS/browser alert for subscription reminders, and auto-records the item directly in your list below!
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button 
+              onClick={triggerChromeNotification}
+              className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs h-10 shadow-md gap-1.5"
+            >
+              <Play className="w-4 h-4 fill-current" /> Trigger Notification
+            </Button>
+          </div>
+        </motion.div>
 
         <div className="space-y-3 flex-1 pb-10">
           {loading ? (

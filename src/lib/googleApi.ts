@@ -231,6 +231,122 @@ export const googleApi = {
         toast.error("Drive upload failed");
         return null;
       }
+    },
+    findOrCreateFolder: async (token: string, folderName: string): Promise<string> => {
+      try {
+        const q = `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+        const encodedQ = encodeURIComponent(q);
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodedQ}&fields=files(id)`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        if (data.files && data.files.length > 0) {
+          return data.files[0].id;
+        }
+
+        const createResponse = await fetch("https://www.googleapis.com/drive/v3/files", {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder'
+          })
+        });
+        if (!createResponse.ok) throw new Error(await createResponse.text());
+        const folder = await createResponse.json();
+        toast.success(`Created Drive folder "${folderName}" for your workspace!`);
+        return folder.id;
+      } catch (err) {
+        console.error("Error findOrCreateFolder:", err);
+        throw err;
+      }
+    },
+    findOrCreateDatabaseFile: async (token: string, folderId: string, filename: string): Promise<{ id: string, content: any }> => {
+      try {
+        const q = `name = '${filename}' and '${folderId}' in parents and trashed = false`;
+        const encodedQ = encodeURIComponent(q);
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodedQ}&fields=files(id,name)`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        
+        if (data.files && data.files.length > 0) {
+          const fileId = data.files[0].id;
+          const content = await googleApi.drive.getFileContent(token, fileId);
+          return { id: fileId, content };
+        }
+
+        const defaultContent = JSON.stringify({
+          tasks: [],
+          habits: [],
+          goals: [],
+          finances: [],
+          lastEditedTime: new Date().toISOString()
+        }, null, 2);
+
+        const metadata = {
+          name: filename,
+          mimeType: "application/json",
+          parents: [folderId]
+        };
+
+        const form = new FormData();
+        form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+        form.append("file", new Blob([defaultContent], { type: "application/json" }));
+
+        const createResponse = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: form
+        });
+        if (!createResponse.ok) throw new Error(await createResponse.text());
+        const newFile = await createResponse.json();
+        toast.success(`Created Drive database file "${filename}" inside MMV XII!`);
+        return { id: newFile.id, content: JSON.parse(defaultContent) };
+      } catch (err) {
+        console.error("Error findOrCreateDatabaseFile:", err);
+        throw err;
+      }
+    },
+    getFileContent: async (token: string, fileId: string): Promise<any> => {
+      try {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const text = await response.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      } catch (err) {
+        console.error("Error getFileContent:", err);
+        throw err;
+      }
+    },
+    updateFileContent: async (token: string, fileId: string, content: string): Promise<boolean> => {
+      try {
+        const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: content
+        });
+        if (!response.ok) throw new Error(await response.text());
+        return true;
+      } catch (err) {
+        console.error("Error updateFileContent:", err);
+        toast.error("Could not sync changes to Drive");
+        return false;
+      }
     }
   },
 
