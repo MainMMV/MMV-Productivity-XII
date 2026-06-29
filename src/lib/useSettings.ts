@@ -41,24 +41,76 @@ export function useSettings() {
     const radiusVal = typeof settings.border_radius_percentage !== 'undefined' ? settings.border_radius_percentage : 35;
     const radiusRem = (radiusVal / 50) * 1;
     document.documentElement.style.setProperty("--radius", `${radiusRem}rem`);
+  }, [settings.theme_hue, settings.border_radius_percentage]);
 
-    // Dynamically update favicon and app icon
+  // Dynamically update favicon and app icon with Poppins text "MMV" and theme matching colors
+  useEffect(() => {
+    const isDark = settings.theme_mode === "dark" || 
+      (settings.theme_mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    
     const hue = settings.theme_hue || 220;
-    const color = `hsl(${hue}, 90%, 66%)`;
-    const darkColor = `hsl(${hue}, 90%, 55%)`;
+    const radiusVal = typeof settings.border_radius_percentage !== 'undefined' ? settings.border_radius_percentage : 35;
+    
+    // Determine card background and text color based on the current theme preset and light/dark mode
+    const presets: Record<string, { card: string; background: string; foreground: string }> = {
+      slate: {
+        card: isDark ? "222 47% 11%" : "0 0% 100%",
+        background: isDark ? "222 47% 7%" : "215 25% 97%",
+        foreground: isDark ? "210 40% 98%" : "222 47% 11%"
+      },
+      sand: {
+        card: isDark ? "20 20% 12%" : "36 50% 99%",
+        background: isDark ? "20 30% 8%" : "36 40% 97%",
+        foreground: isDark ? "36 30% 94%" : "24 60% 15%"
+      },
+      mint: {
+        card: isDark ? "150 30% 10%" : "0 0% 100%",
+        background: isDark ? "150 40% 6%" : "140 20% 98%",
+        foreground: isDark ? "140 30% 96%" : "152 60% 12%"
+      },
+      obsidian: {
+        card: isDark ? "240 10% 9%" : "0 0% 100%",
+        background: isDark ? "240 10% 4.5%" : "240 10% 96%",
+        foreground: isDark ? "0 0% 98%" : "240 10% 4%"
+      }
+    };
+
+    const preset = presets[(settings as any).theme_preset || "slate"] || presets.slate;
+    
+    // Background color of favicon matches the theme preset's card color
+    const bgCol = `hsl(${preset.card})`;
+    
+    // Primary accent and text colors dynamically matched for high-contrast visibility
+    const primaryCol = `hsl(${hue}, 90%, 60%)`;
+    const textCol = isDark ? `hsl(${hue}, 95%, 72%)` : `hsl(${hue}, 90%, 48%)`;
     
     const svg = `
       <svg width="256" height="256" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <defs>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&amp;display=swap');
+            .text-mmv {
+              font-family: 'Poppins', sans-serif;
+              font-weight: 800;
+              font-size: 32px;
+              fill: ${textCol};
+              letter-spacing: -1px;
+            }
+          </style>
           <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-opacity="0.2" flood-color="${darkColor}" />
+            <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-opacity="0.15" flood-color="${primaryCol}" />
           </filter>
         </defs>
-        <rect width="100" height="100" rx="${radiusVal / 2.5}" fill="white" />
-        <g transform="translate(15, 15) scale(0.7)" filter="url(#shadow)">
-          <path d="M 75 25 A 35 35 0 1 0 85 50" fill="none" stroke="${color}" stroke-width="18" stroke-linecap="round" />
-          <path d="M 30 55 L 45 70 L 75 40" fill="none" stroke="${color}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+        <!-- Background rect shaped with user's border-radius settings -->
+        <rect x="2" y="2" width="96" height="96" rx="${Math.max(6, radiusVal / 2.2)}" fill="${bgCol}" stroke="${primaryCol}" stroke-width="5" />
+        
+        <!-- Text MMV in custom Poppins typeface with subtle drop shadow -->
+        <g filter="url(#shadow)">
+          <text x="50%" y="54%" class="text-mmv" text-anchor="middle" dominant-baseline="middle">MMV</text>
         </g>
+        
+        <!-- Elegant dynamic corner badge/accent dot in primary theme color -->
+        <circle cx="82" cy="34" r="4.5" fill="${primaryCol}" />
       </svg>
     `.trim().replace(/>\s+</g, '><');
 
@@ -79,8 +131,12 @@ export function useSettings() {
       document.head.appendChild(appleLink);
     }
     appleLink.setAttribute('href', dataUrl);
-
-  }, [settings.theme_hue, settings.border_radius_percentage]);
+  }, [
+    settings.theme_hue, 
+    settings.border_radius_percentage, 
+    settings.theme_mode, 
+    (settings as any).theme_preset
+  ]);
 
   // Apply preset theme custom css variables
   useEffect(() => {
