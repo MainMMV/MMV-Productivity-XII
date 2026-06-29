@@ -24,7 +24,9 @@ import {
   RefreshCw,
   FileCode,
   Check,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Upload
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { useGoogleAuth } from '@/lib/googleAuth';
@@ -32,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { googleApi } from '@/lib/googleApi';
 import { toast } from 'react-hot-toast';
+import { base44 } from '@/api/base44Client';
 
 export default function DatabaseGuide() {
   const { isAuthenticated, user } = useAuth();
@@ -155,6 +158,150 @@ export default function DatabaseGuide() {
       toast.error("Sync failed.");
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const exportAppDataToEditor = async () => {
+    try {
+      setIsLoadingDriveDb(true);
+      addDriveLog("Fetching current app data from Firestore/LocalStorage...", "info");
+      
+      const [habits, tasks, expenses, income, subscriptions, goals, userSettings] = await Promise.all([
+        base44.entities.Habit.list(),
+        base44.entities.Task.list(),
+        base44.entities.Expense.list(),
+        base44.entities.Income.list(),
+        base44.entities.Subscription.list(),
+        base44.entities.Goal.list(),
+        base44.entities.UserSettings.list()
+      ]);
+
+      const fullDatabase = {
+        tasks,
+        habits,
+        expenses,
+        income,
+        subscriptions,
+        goals,
+        userSettings,
+        lastEditedTime: new Date().toISOString()
+      };
+
+      const formatted = JSON.stringify(fullDatabase, null, 2);
+      setJsonString(formatted);
+      setIsValidJson(true);
+      setJsonError(null);
+      addDriveLog("Populated editor with live app database records successfully!", "success");
+      toast.success("Loaded live app data into JSON editor!");
+    } catch (err: any) {
+      console.error("Export app data to editor failed:", err);
+      addDriveLog(`Load failed: ${err.message || "Unknown error"}`, "error");
+      toast.error("Could not load live app data.");
+    } finally {
+      setIsLoadingDriveDb(false);
+    }
+  };
+
+  const restoreAppDataFromEditor = async () => {
+    if (!window.confirm("WARNING: This will overwrite your active database (habits, tasks, goals, etc.) with the data in the JSON editor. Are you sure you want to proceed?")) {
+      return;
+    }
+
+    try {
+      setIsLoadingDriveDb(true);
+      addDriveLog("Restoring app data from editor JSON...", "info");
+      const parsed = JSON.parse(jsonString);
+
+      // 1. Restore Habits
+      if (Array.isArray(parsed.habits)) {
+        addDriveLog("Restoring Habits...", "info");
+        const current = await base44.entities.Habit.list();
+        await Promise.all(current.map(item => base44.entities.Habit.delete(item.id)));
+        await Promise.all(parsed.habits.map(item => {
+          const { id, userId, created_at, updated_at, ...clean } = item;
+          return base44.entities.Habit.create(clean);
+        }));
+      }
+
+      // 2. Restore Tasks
+      if (Array.isArray(parsed.tasks)) {
+        addDriveLog("Restoring Tasks...", "info");
+        const current = await base44.entities.Task.list();
+        await Promise.all(current.map(item => base44.entities.Task.delete(item.id)));
+        await Promise.all(parsed.tasks.map(item => {
+          const { id, userId, created_at, updated_at, ...clean } = item;
+          return base44.entities.Task.create(clean);
+        }));
+      }
+
+      // 3. Restore Expenses
+      if (Array.isArray(parsed.expenses)) {
+        addDriveLog("Restoring Expenses...", "info");
+        const current = await base44.entities.Expense.list();
+        await Promise.all(current.map(item => base44.entities.Expense.delete(item.id)));
+        await Promise.all(parsed.expenses.map(item => {
+          const { id, userId, created_at, updated_at, ...clean } = item;
+          return base44.entities.Expense.create(clean);
+        }));
+      }
+
+      // 4. Restore Income
+      if (Array.isArray(parsed.income)) {
+        addDriveLog("Restoring Income...", "info");
+        const current = await base44.entities.Income.list();
+        await Promise.all(current.map(item => base44.entities.Income.delete(item.id)));
+        await Promise.all(parsed.income.map(item => {
+          const { id, userId, created_at, updated_at, ...clean } = item;
+          return base44.entities.Income.create(clean);
+        }));
+      }
+
+      // 5. Restore Subscriptions
+      if (Array.isArray(parsed.subscriptions)) {
+        addDriveLog("Restoring Subscriptions...", "info");
+        const current = await base44.entities.Subscription.list();
+        await Promise.all(current.map(item => base44.entities.Subscription.delete(item.id)));
+        await Promise.all(parsed.subscriptions.map(item => {
+          const { id, userId, created_at, updated_at, ...clean } = item;
+          return base44.entities.Subscription.create(clean);
+        }));
+      }
+
+      // 6. Restore Goals
+      if (Array.isArray(parsed.goals)) {
+        addDriveLog("Restoring Goals...", "info");
+        const current = await base44.entities.Goal.list();
+        await Promise.all(current.map(item => base44.entities.Goal.delete(item.id)));
+        await Promise.all(parsed.goals.map(item => {
+          const { id, userId, created_at, updated_at, ...clean } = item;
+          return base44.entities.Goal.create(clean);
+        }));
+      }
+
+      // 7. Restore User Settings
+      if (Array.isArray(parsed.userSettings)) {
+        addDriveLog("Restoring User Settings...", "info");
+        const current = await base44.entities.UserSettings.list();
+        await Promise.all(current.map(item => base44.entities.UserSettings.delete(item.id)));
+        await Promise.all(parsed.userSettings.map(item => {
+          const { id, userId, created_at, updated_at, ...clean } = item;
+          return base44.entities.UserSettings.create(clean);
+        }));
+      }
+
+      addDriveLog("Database fully restored from JSON editor content!", "success");
+      toast.success("Database restored successfully!");
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (err: any) {
+      console.error("Restore app data from editor failed:", err);
+      addDriveLog(`Restore failed: ${err.message || "Unknown error"}`, "error");
+      toast.error("Could not restore data.");
+    } finally {
+      setIsLoadingDriveDb(false);
     }
   };
 
@@ -421,6 +568,24 @@ export default function DatabaseGuide() {
                   className="rounded-xl font-bold text-xs h-10 px-4"
                 >
                   Format JSON
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="secondary"
+                  onClick={exportAppDataToEditor} 
+                  disabled={isLoadingDriveDb || isSyncing}
+                  className="rounded-xl font-bold text-xs gap-1.5 h-10 px-4 border border-blue-500/10"
+                >
+                  <Download className="w-4 h-4 text-blue-500" /> Pull App Data to Editor
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={restoreAppDataFromEditor}
+                  disabled={isLoadingDriveDb || isSyncing || !isValidJson}
+                  className="rounded-xl font-bold text-xs gap-1.5 h-10 px-4 border-red-500/20 text-red-500 hover:bg-red-500/10"
+                >
+                  <Upload className="w-4 h-4" /> Restore App Data from Editor
                 </Button>
               </div>
             </div>

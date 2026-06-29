@@ -1,0 +1,518 @@
+================================================================================
+          MMV-XII PRODUCTIVITY SUITE: THE COMPLETE WEB-TO-APK ARCHITECTURE
+================================================================================
+This is the master blueprints, design specs, and native Kotlin / Capacitor source 
+blueprints for compiling or rebuilding the MMV-XII Productivity Suite as a 
+fully optimized, 100% feature-matched Android application (APK).
+
+--------------------------------------------------------------------------------
+                               TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. TYPOGRAPHY & VISUAL BRAND DESIGN SYSTEM
+2. APP SHELL & BOTTOM NAV-BAR INTERFACE BLUEPRINT
+3. DYNAMIC COLOR SCHEMES & ACCENT COLOR SYSTEM
+4. DATABASE DOCUMENT MODELS & CORE COLLECTION SCHEMAS
+5. SYNTHESIZER SOUND ENGINE: CONVERTING WEB AUDIO TO NATIVE KOTLIN
+6. LOCAL BACKGROUND SCHEDULERS & REAL-TIME NOTIFICATIONS
+7. INSTANT WEB-TO-APK HOT SYNC MECHANISMS
+8. PATH A: CAPACITOR HIGH-FIDELITY WRAPPER RUNTIME
+9. PATH B: JETPACK COMPOSE NATIVE KOTLIN REWRITE SPECIFICATIONS
+10. GITHUB TO FIREBASE AUTOMATIC MERGE CONTINUOUS INTEGRATION
+
+================================================================================
+                  1. TYPOGRAPHY & VISUAL BRAND DESIGN SYSTEM
+================================================================================
+Your web application utilizes an elegant, modern, high-contrast, rounded-corner 
+aesthetic built with custom Poppins typography and a configurable radius system.
+
+* Font Family: 'Poppins', sans-serif (Weights: Light 300, Regular 400, Medium 500, Semi-Bold 600, Bold 700)
+* Web CSS Import: @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+* Android Font Pairing: Use the true Google Font Poppins TTF resources inside your android project structure:
+  - `res/font/poppins_light.ttf`
+  - `res/font/poppins_regular.ttf`
+  - `res/font/poppins_medium.ttf`
+  - `res/font/poppins_semibold.ttf`
+  - `res/font/poppins_bold.ttf`
+
+#### Typography Hierarchy:
+* Display Title (e.g. Finance summary, Goals, Habit title header):
+  - Web: `font-poppins font-semibold text-2xl md:text-3xl tracking-tight text-foreground`
+  - Android (Compose): `TextStyle(fontFamily = Poppins, fontWeight = FontWeight.SemiBold, fontSize = 24.sp, letterSpacing = (-0.5).sp)`
+* Section Header:
+  - Web: `font-poppins font-medium text-lg tracking-normal text-foreground/90`
+  - Android (Compose): `TextStyle(fontFamily = Poppins, fontWeight = FontWeight.Medium, fontSize = 18.sp)`
+* Body Copy & Input Texts:
+  - Web: `font-poppins font-normal text-sm text-muted-foreground`
+  - Android (Compose): `TextStyle(fontFamily = Poppins, fontWeight = FontWeight.Normal, fontSize = 14.sp, color = MutedColor)`
+* Labels / Small Details (e.g., Dates, badges, status lines):
+  - Web: `font-poppins font-medium text-xs tracking-wider uppercase`
+  - Android (Compose): `TextStyle(fontFamily = Poppins, fontWeight = FontWeight.Medium, fontSize = 11.sp, letterSpacing = 0.5.sp)`
+
+#### Interactive Rounded Borders (The Dynamic Corner System):
+The border-radius of card components, buttons, inputs, and modals is dynamically calculated:
+- Web formula: `const radiusRem = (settings.border_radius_percentage / 50) * 1;`
+- Default percentage is 35% which maps to `0.7rem` (11.2px) corners.
+- Android adaptation: Map the settings `border_radius_percentage` value dynamically to DP values for custom shape definitions:
+  - Kotlin formula: `val cornerDp = (borderRadiusPercentage.toFloat() / 50f) * 16.dp`
+  - Default: `RoundedCornerShape(11.2.dp)` up to `RoundedCornerShape(32.dp)`.
+
+================================================================================
+               2. APP SHELL & BOTTOM NAV-BAR INTERFACE BLUEPRINT
+================================================================================
+For 100% user interface similarity, the Android app must mirror the clean spacing, 
+bottom navigation tray (ideal for native thumb gestures), and floating menus:
+
+```
++-------------------------------------------------------------+
+|  [Logo & User Profile]                      [Sync State]    |
+|  Welcome back, MMV User!                                    |
++-------------------------------------------------------------+
+|                                                             |
+|   [ ACTIVE MODULE OR DASHBOARD SCREEN ]                     |
+|   - Dynamic Cards with customized corner radiuses.          |
+|   - Soft Haptic Vibration feedback on list item toggles.    |
+|   - Staggered entering transitions.                         |
+|                                                             |
++-------------------------------------------------------------+
+|                         [ (+) Add floating transaction/task] |
++-------------------------------------------------------------+
+|  [Home]   [Habits]   [Tasks]   [Finance]   [Goals]   [More]  |
++-------------------------------------------------------------+
+```
+
+#### Transition Animations (Using Motion):
+All tab switches and card opening events should utilize a standard spring or ease-in-out curve to feel incredibly responsive:
+- Duration: 220ms (Fast, tactile entry)
+- Path transition: Fade-in coupled with a slide-up distance of `12dp` (Y-Axis).
+
+================================================================================
+                 3. DYNAMIC COLOR SCHEMES & ACCENT COLOR SYSTEM
+================================================================================
+Your web application does not have hardcoded colors. Instead, it computes and injects 
+custom HSL variables directly based on two configurations inside `userSettings`:
+1. `theme_hue` (Integer from 0 to 360): Controls primary focus highlight, links, and ring accents.
+2. `theme_preset` ("slate" | "sand" | "mint" | "obsidian"): Controls backgrounds, borders, cards, and input text styling.
+
+#### Dynamic Theme Variables:
+* Primary Hue Color: `hsl(theme_hue, 90%, 66%)`
+* Accent Shade Color: `hsl(theme_hue, 90%, 55%)`
+
+#### Presets HSL Blueprint:
+```
+┌──────────────┬───────────────────────────────┬───────────────────────────────┐
+│ Preset Name  │ Light Mode Colors             │ Dark Mode Colors              │
+├──────────────┼───────────────────────────────┼───────────────────────────────┤
+│ SLATE        │ Background: 215 25% 97%       │ Background: 222 47% 7%        │
+│              │ Card: 0 0% 100%               │ Card: 222 47% 11%             │
+│              │ Border: 214 32% 91%           │ Border: 217 32% 18%           │
+│              │ Muted: 215 25% 92%            │ Muted: 217 32% 15%            │
+├──────────────┼───────────────────────────────┼───────────────────────────────┤
+│ SAND         │ Background: 36 40% 97%        │ Background: 20 30% 8%         │
+│              │ Card: 36 50% 99%              │ Card: 20 20% 12%              │
+│              │ Border: 34 30% 88%            │ Border: 24 20% 18%            │
+│              │ Muted: 34 30% 92%             │ Muted: 24 20% 14%             │
+├──────────────┼───────────────────────────────┼───────────────────────────────┤
+│ MINT         │ Background: 140 20% 98%       │ Background: 150 40% 6%        │
+│              │ Card: 0 0% 100%               │ Card: 150 30% 10%             │
+│              │ Border: 140 20% 90%           │ Border: 150 20% 16%           │
+│              │ Muted: 140 18% 93%            │ Muted: 150 25% 12%            │
+├──────────────┼───────────────────────────────┼───────────────────────────────┤
+│ OBSIDIAN     │ Background: 240 10% 96%       │ Background: 240 10% 4.5%      │
+│              │ Card: 0 0% 100%               │ Card: 240 10% 9%              │
+│              │ Border: 240 10% 88%           │ Border: 240 6% 14%            │
+│              │ Muted: 240 10% 92%            │ Muted: 240 6% 11%             │
+└──────────────┴───────────────────────────────┴───────────────────────────────┘
+```
+
+================================================================================
+             4. DATABASE DOCUMENT MODELS & CORE COLLECTION SCHEMAS
+================================================================================
+Both platforms speak directly to the target Cloud Firestore instance.
+- Project ID: `polished-operation-9k8sk`
+- Database ID: `ai-studio-mmvproductivitya-775dcb08-05ba-4085-aa0d-9459b11b99ba`
+
+Ensure all native queries are queried or written matching these exact structures:
+
+#### 1. UserSettings Document (Collection: `userSettings`, Document ID: [User UID])
+* `userId` (String, equal to Auth UID)
+* `first_name` (String, default: "MMV")
+* `last_name` (String, default: "User")
+* `currency_primary` (String, default: "USD")
+* `currency_secondary` (String, default: "UZS")
+* `uzs_rate` (Double, default: 12200.0)
+* `theme_mode` (String: "light" | "dark" | "system")
+* `theme_hue` (Integer, default: 220)
+* `theme_preset` (String: "slate" | "sand" | "mint" | "obsidian")
+* `border_radius_percentage` (Integer, default: 35)
+* `notifications_enabled` (Boolean, default: true)
+* `tasks_notifications` (Boolean, default: true)
+* `habits_notifications` (Boolean, default: true)
+
+#### 2. Habit Document (Collection: `habits`, Document ID: Auto-generated)
+* `userId` (String)
+* `title` (String)
+* `frequency` (String: "daily" | "weekly" | "custom")
+* `completions` (Array of ISO Date Strings, e.g. ["2026-06-28", "2026-06-29"])
+* `is_active` (Boolean, default: true)
+* `created_at` (String, ISO timestamp)
+* `updated_at` (String, ISO timestamp)
+
+#### 3. Task Document (Collection: `tasks`, Document ID: Auto-generated)
+* `userId` (String)
+* `title` (String)
+* `due_date` (String, format "YYYY-MM-DD")
+* `priority` (String: "low" | "medium" | "high")
+* `status` (String: "todo" | "in_progress" | "done")
+* `created_at` (String, ISO timestamp)
+* `updated_at` (String, ISO timestamp)
+
+#### 4. Expense Document (Collection: `expenses`, Document ID: Auto-generated)
+* `userId` (String)
+* `amount` (Double)
+* `category` (String)
+* `date` (String, format "YYYY-MM-DD")
+* `description` (String)
+* `created_at` (String, ISO timestamp)
+* `updated_at` (String, ISO timestamp)
+
+#### 5. Income Document (Collection: `income`, Document ID: Auto-generated)
+* `userId` (String)
+* `amount` (Double)
+* `source` (String)
+* `date` (String, format "YYYY-MM-DD")
+* `description` (String)
+* `created_at` (String, ISO timestamp)
+* `updated_at` (String, ISO timestamp)
+
+#### 6. Subscription Document (Collection: `subscriptions`, Document ID: Auto-generated)
+* `userId` (String)
+* `name` (String)
+* `cost` (Double)
+* `billingCycle` (String: "monthly" | "yearly")
+* `nextBilling` (String, format "YYYY-MM-DD")
+* `is_active` (Boolean, default: true)
+* `created_at` (String, ISO timestamp)
+* `updated_at` (String, ISO timestamp)
+
+#### 7. Goal Document (Collection: `goals`, Document ID: Auto-generated)
+* `userId` (String)
+* `title` (String)
+* `target` (Double)
+* `current` (Double)
+* `deadline` (String, format "YYYY-MM-DD")
+* `status` (String: "active" | "completed")
+* `created_at` (String, ISO timestamp)
+* `updated_at` (String, ISO timestamp)
+
+================================================================================
+       5. SYNTHESIZER SOUND ENGINE: CONVERTING WEB AUDIO TO NATIVE KOTLIN
+================================================================================
+Your web productivity suite implements a custom audio synthesizer that plays elegant
+ambient feedback sounds for events like complete, toggle, success, and celebration.
+In Android, write a custom Native Audio Synthesizer to output these exact soundwaves 
+digitally without relying on heavy file resources!
+
+#### Native Kotlin Synthesizer Service (`SoundSynthesizer.kt`)
+```kotlin
+package com.mmvxii.productivity.audio
+
+import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioTrack
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.sin
+
+class SoundSynthesizer {
+    private val sampleRate = 44100
+
+    fun playSound(type: String) {
+        CoroutineScope(Dispatchers.Default).launch {
+            when (type) {
+                "toggle" -> playSoftPop()
+                "complete" -> playChimeArpeggio()
+                "success" -> playPeacefulChords()
+                "celebration" -> playCelebrationSymphony()
+            }
+        }
+    }
+
+    private fun generateSineWave(freq: Double, durationMs: Int, volumeMultiplier: Float = 0.15f): ShortArray {
+        val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+        val buffer = ShortArray(numSamples)
+        for (i in 0 until numSamples) {
+            val t = i.toDouble() / sampleRate
+            // Linear decay factor for smoother audio tail
+            val decay = 1.0 - (i.toDouble() / numSamples)
+            val sample = sin(2.0 * Math.PI * freq * t) * Short.MAX_VALUE * volumeMultiplier * decay
+            buffer[i] = sample.toInt().toShort()
+        }
+        return buffer
+    }
+
+    private fun writeToAudioTrack(samples: ShortArray) {
+        val minBufferSize = AudioTrack.getMinBufferSize(
+            sampleRate,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT
+        )
+        val audioTrack = AudioTrack(
+            AudioManager.STREAM_MUSIC,
+            sampleRate,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            maxOf(minBufferSize, samples.size * 2),
+            AudioTrack.MODE_STATIC
+        )
+        audioTrack.write(samples, 0, samples.size)
+        audioTrack.play()
+        
+        // Cleanup resources once played
+        CoroutineScope(Dispatchers.IO).launch {
+            delay((samples.size.toFloat() / sampleRate * 1000).toLong() + 100)
+            audioTrack.release()
+        }
+    }
+
+    private fun playSoftPop() {
+        // Simple ambient popping noise going from 440hz down to 120hz
+        val durationMs = 100
+        val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+        val buffer = ShortArray(numSamples)
+        for (i in 0 until numSamples) {
+            val t = i.toDouble() / sampleRate
+            val progress = i.toDouble() / numSamples
+            val freq = 440.0 - (320.0 * progress) // Slide frequency
+            val decay = 1.0 - progress
+            buffer[i] = (sin(2.0 * Math.PI * freq * t) * Short.MAX_VALUE * 0.08f * decay).toInt().toShort()
+        }
+        writeToAudioTrack(buffer)
+    }
+
+    private fun playChimeArpeggio() {
+        // Sparkling C Major Arpeggio (C5, E5, G5, C6) with staggered starts
+        val freqs = doubleArrayOf(523.25, 659.25, 783.99, 1046.50)
+        CoroutineScope(Dispatchers.Default).launch {
+            freqs.forEachIndexed { index, freq ->
+                delay((index * 80).toLong())
+                val samples = generateSineWave(freq, 400, 0.12f)
+                writeToAudioTrack(samples)
+            }
+        }
+    }
+
+    private fun playPeacefulChords() {
+        // Harmonious chord combining D5 (587.33Hz) and A5 (880.00Hz)
+        val freq1 = 587.33
+        val freq2 = 880.00
+        val durationMs = 500
+        val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+        val buffer = ShortArray(numSamples)
+        for (i in 0 until numSamples) {
+            val t = i.toDouble() / sampleRate
+            val decay = 1.0 - (i.toDouble() / numSamples)
+            val wave1 = sin(2.0 * Math.PI * freq1 * t)
+            val wave2 = sin(2.0 * Math.PI * freq2 * t)
+            val mixed = (wave1 + wave2) / 2.0
+            buffer[i] = (mixed * Short.MAX_VALUE * 0.15f * decay).toInt().toShort()
+        }
+        writeToAudioTrack(buffer)
+    }
+
+    private fun playCelebrationSymphony() {
+        // Beautiful cascading major scale arpeggio
+        val freqs = doubleArrayOf(523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50)
+        CoroutineScope(Dispatchers.Default).launch {
+            freqs.forEachIndexed { index, freq ->
+                delay((index * 60).toLong())
+                val samples = generateSineWave(freq, 600, 0.1f)
+                writeToAudioTrack(samples)
+            }
+        }
+    }
+}
+```
+
+================================================================================
+            6. LOCAL BACKGROUND SCHEDULERS & REAL-TIME NOTIFICATIONS
+================================================================================
+Your Android application must dynamically schedule background tasks (alarms or 
+WorkManagers) checking for pending task deadlines, daily habit prompts, and 
+billing reminders.
+
+#### Custom Alarm Broadcast Receiver (`MMVAlarmReceiver.kt`)
+This class receives alarms even if the app is closed, and immediately triggers an
+Android System notification with matching priority accents:
+```kotlin
+package com.mmvxii.productivity.notifications
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+
+class MMVAlarmReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
+
+        val title = intent.getStringExtra("title") ?: "MMV-XII Productivity"
+        val message = intent.getStringExtra("message") ?: "Time to check your status goals!"
+        val notificationId = intent.getIntExtra("id", 1001)
+
+        val channelId = "mmv_productivity_channel"
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "MMV-XII Tasks, Habits & Budgets",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Real-time schedules for MMV-XII elements"
+                enableLights(true)
+                enableVibration(true)
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        // Action when notification clicked
+        val mainIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            mainIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
+}
+```
+
+================================================================================
+                    7. INSTANT WEB-TO-APK HOT SYNC MECHANISMS
+================================================================================
+If you build a **new detailed dashboard section** or modify database pipelines in 
+Vite/React here inside Google AI Studio, you have three primary methods to deploy 
+and reflect those edits in your Android App instantly:
+
+#### A. The Real-time Capacitor Webview Portal (No Code-Recompilation Required)
+Instead of freezing the web assets inside your APK file, configure your `capacitor.config.json` 
+to serve your static Web Assets dynamically from your **Live Shared App URL**:
+```json
+{
+  "appId": "com.mmvxii.productivity",
+  "appName": "MMV-XII Productivity",
+  "webDir": "dist",
+  "server": {
+    "url": "https://ais-pre-mtw7j2zdcu2mzlh4g6yogc-213490170517.asia-southeast1.run.app",
+    "cleartext": true,
+    "allowNavigation": [
+      "ais-pre-mtw7j2zdcu2mzlh4g6yogc-213490170517.asia-southeast1.run.app"
+    ]
+  }
+}
+```
+*How it updates:* Every single time we finish compiling the web applet, the web portal 
+inside your Android APK automatically reloads the freshly modified layout, adding new dashboards,
+buttons, and forms to your phone immediately!
+
+#### B. The Dynamic UI Schema Document Pattern (For Native Kotlin Apps)
+If you are writing pure Native Jetpack Compose UI, save a dynamic configuration layout schema inside
+Firestore: Collection `metadata`, Document ID `app_config`. Both apps subscribe to this document.
+Whenever we introduce a new item (like detailed analytical summaries), we expand the JSON config.
+The Compose app parses the schema and renders the views conditionally inside a dynamic `LazyColumn` container.
+
+================================================================================
+               8. PATH A: CAPACITOR HIGH-FIDELITY WRAPPER RUNTIME
+================================================================================
+This is the recommended path if you want 100% feature and visual parity while sharing
+the exact same React code and custom assets instantly.
+
+```bash
+# Install core capacitor packages
+npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/local-notifications @capacitor/app
+
+# Initialize project with your MMV-XII package name
+npx cap init "MMV-XII" "com.mmvxii.productivity" --web-dir=dist
+
+# Add the native Android container
+npx cap add android
+
+# Build your production-ready distribution assets
+npm run build
+
+# Sync assets and libraries to the Android source tree
+npx cap sync
+
+# Open the code inside Android Studio to deploy your APK
+npx cap open android
+```
+
+================================================================================
+        9. PATH B: JETPACK COMPOSE NATIVE KOTLIN REWRITE SPECIFICATIONS
+================================================================================
+If you choose to write a 100% native Kotlin app with Jetpack Compose, build your
+data repository to parse and cache documents locally using the custom Firestore database.
+
+#### Custom Firestore Database Initializer (`MMVFirestore.kt`)
+```kotlin
+package com.mmvxii.productivity.database
+
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+
+object MMVFirestore {
+    val instance: FirebaseFirestore by lazy {
+        // target custom Firestore instance
+        val dbId = "ai-studio-mmvproductivitya-775dcb08-05ba-4085-aa0d-9459b11b99ba"
+        val firestore = FirebaseFirestore.getInstance(dbId)
+        
+        // Optimize cache configurations for seamless offline work
+        val settings = FirebaseFirestoreSettings.Builder()
+            .setPersistenceEnabled(true)
+            .setCacheSizeBytes(FirebaseFirestoreSettings.CACHE_SIZE_UNLIMITED)
+            .build()
+        firestore.firestoreSettings = settings
+        
+        firestore
+    }
+}
+```
+
+================================================================================
+          10. GITHUB TO FIREBASE AUTOMATIC MERGE CONTINUOUS INTEGRATION
+================================================================================
+Whenever you perform a commit, push, or pull request merge on GitHub, your web code is 
+automatically compiled and pushed directly to Firebase Hosting. 
+
+This ensures that any updates made here in AI Studio immediately sync with your APK and 
+production deployment seamlessly.
+
+#### Location 1: Merges or Pushes (`/.github/workflows/firebase-hosting-merge.yml`)
+Runs automatically when you merge a branch to `main` or `master`. It builds and deploys 
+the live web bundle.
+
+#### Location 2: Pull Requests (`/.github/workflows/firebase-hosting-pull-request.yml`)
+Deploys a lightweight preview channel on pull requests so you can inspect new features 
+and dashboard sections in your browser before merging them to your live production APK.
+
+*Sync Requirements:* Add your Firebase Service account token to your Github repository secrets 
+under the key name `FIREBASE_SERVICE_ACCOUNT_POLISHED_OPERATION_9K8SK` or `FIREBASE_SERVICE_ACCOUNT_MMV_XII`
+to keep both code environments fully aligned in real-time.
+================================================================================

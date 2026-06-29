@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import appletConfig from "../../firebase-applet-config.json";
 
 // The user's custom mmv-xii Firebase production configuration
 const userConfig = {
@@ -13,18 +14,35 @@ const userConfig = {
   measurementId: "G-R1PHSE72FQ"
 };
 
-// Allow overriding with environment variables for custom external environments if needed
-const firebaseConfig = import.meta.env.VITE_FIREBASE_API_KEY ? {
+const isPreviewEnv = typeof window !== "undefined" && (
+  window.location.hostname.includes("localhost") || 
+  window.location.hostname.includes("run.app") || 
+  window.location.hostname.includes("gitpod") ||
+  window.location.hostname.includes("ai.studio")
+);
+
+// If in preview/workspace env, use appletConfig, otherwise use userConfig (or environment variables)
+const firebaseConfig = isPreviewEnv && appletConfig.apiKey ? {
+  apiKey: appletConfig.apiKey,
+  authDomain: appletConfig.authDomain,
+  projectId: appletConfig.projectId,
+  storageBucket: appletConfig.storageBucket,
+  messagingSenderId: appletConfig.messagingSenderId,
+  appId: appletConfig.appId,
+} : (import.meta.env.VITE_FIREBASE_API_KEY ? {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-} : userConfig;
+} : userConfig);
 
 const app = initializeApp(firebaseConfig);
-const databaseId = import.meta.env.VITE_FIREBASE_DATABASE_ID || "ai-studio-775dcb08-05ba-4085-aa0d-9459b11b99ba";
+const databaseId = (isPreviewEnv && appletConfig.apiKey)
+  ? (appletConfig as any).firestoreDatabaseId
+  : (import.meta.env.VITE_FIREBASE_DATABASE_ID || null);
+
 const db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();

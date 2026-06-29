@@ -28,7 +28,8 @@
         "userId": { "type": "string" },
         "title": { "type": "string" },
         "frequency": { "type": "string" }
-      }
+      },
+      "required": ["userId"]
     },
     "Task": {
       "title": "Task",
@@ -39,13 +40,90 @@
         "title": { "type": "string" },
         "due_date": { "type": "string" },
         "priority": { "type": "string" }
-      }
+      },
+      "required": ["userId"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "User expenses tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["userId"]
+    },
+    "Income": {
+      "title": "Income",
+      "description": "User income tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "source": { "type": "string" },
+        "date": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["userId"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "User subscriptions tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "cost": { "type": "number" },
+        "billingCycle": { "type": "string" },
+        "nextBilling": { "type": "string" }
+      },
+      "required": ["userId"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "User personal goals",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "target": { "type": "number" },
+        "current": { "type": "number" },
+        "deadline": { "type": "string" }
+      },
+      "required": ["userId"]
     }
   },
   "firestore": {
     "/userSettings/{settingsId}": {
       "schema": "UserSettings",
       "description": "User configuration storage"
+    },
+    "/habits/{habitId}": {
+      "schema": "Habit",
+      "description": "User habit list"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "User task list"
+    },
+    "/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "User expense list"
+    },
+    "/income/{incomeId}": {
+      "schema": "Income",
+      "description": "User income list"
+    },
+    "/subscriptions/{subId}": {
+      "schema": "Subscription",
+      "description": "User subscription list"
+    },
+    "/goals/{goalId}": {
+      "schema": "Goal",
+      "description": "User goals list"
     }
   }
 }

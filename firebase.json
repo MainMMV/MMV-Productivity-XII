@@ -1,5 +1,12 @@
 {
+  "firestore": [
+    {
+      "database": "ai-studio-mmvproductivitya-775dcb08-05ba-4085-aa0d-9459b11b99ba",
+      "rules": "firestore.rules"
+    }
+  ],
   "hosting": {
+    "site": "polished-operation-9k8sk",
     "public": "dist",
     "ignore": [
       "firebase.json",
