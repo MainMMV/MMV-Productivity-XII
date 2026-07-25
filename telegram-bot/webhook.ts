@@ -7,7 +7,10 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const PORT = process.env.PORT || 3001; // Can run alongside web app or independently
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
+const rawBotToken = process.env.TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = (rawBotToken && !rawBotToken.toUpperCase().includes("YOUR_BOT")) 
+  ? rawBotToken 
+  : "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
 const WEBHOOK_DOMAIN = process.env.TELEGRAM_WEBHOOK_DOMAIN || "https://mmvproductivityxii.vercel.app"; // e.g. "https://my-app.run.app"
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://ysjzqffgrzwklxlbwdby.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzanpxZmZncnp3a2x4bGJ3ZGJ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzM0MDQ3NSwiZXhwIjoyMDg4OTE2NDc1fQ.nlQAu3cGjtRRv0SeJ9HkqEZ2MeOtYc6XrIRfHdiQgOI";
@@ -93,7 +96,7 @@ bot.telegram.setMyCommands([
   { command: 'addexpense', description: 'Log a new expense' },
   { command: 'addincome', description: 'Log new income earnings' },
   { command: 'goals', description: 'Check custom saving targets progress' }
-]);
+]).catch((err) => console.warn("Notice: Could not set Telegram commands schema:", err.message || err));
 
 // --- REGISTER DYNAMIC BOT COMMANDS ---
 

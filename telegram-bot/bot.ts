@@ -5,7 +5,10 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
+const rawBotToken = process.env.TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = (rawBotToken && !rawBotToken.toUpperCase().includes("YOUR_BOT")) 
+  ? rawBotToken 
+  : "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://ysjzqffgrzwklxlbwdby.supabase.co";
 // Client-side key or service role key which allows bypassing RLS for bot actions
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzanpxZmZncnp3a2x4bGJ3ZGJ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzM0MDQ3NSwiZXhwIjoyMDg4OTE2NDc1fQ.nlQAu3cGjtRRv0SeJ9HkqEZ2MeOtYc6XrIRfHdiQgOI";
@@ -85,19 +88,6 @@ async function getOrCreateSupabaseUser(tgUser: { id: number, first_name: string,
   console.error("Auth creation failed:", signUpError?.message || signInError?.message);
   throw new Error("Unable to link account: " + (signUpError?.message || signInError?.message));
 }
-
-// Setup bot menu commands
-bot.telegram.setMyCommands([
-  { command: 'start', description: 'Power up the MMV Productivity Workspace' },
-  { command: 'help', description: 'Comprehensive guide & command usage examples' },
-  { command: 'habits', description: 'Review your daily habits and tracking checklists' },
-  { command: 'tasks', description: 'Review pending high priority tasks' },
-  { command: 'addtask', description: 'Create a new todo milestone immediately' },
-  { command: 'finance', description: 'Review revenue, spending buffers, and balances' },
-  { command: 'addexpense', description: 'Log a new expense' },
-  { command: 'addincome', description: 'Log new income earnings' },
-  { command: 'goals', description: 'Check custom saving targets progress' }
-]);
 
 // --- COMMAND HANDLERS ---
 
@@ -550,8 +540,24 @@ bot.action("view_tasks", async (ctx) => {
 });
 
 // Start listening
-bot.launch().then(() => {
+bot.launch().then(async () => {
   console.log("MMV Productivity Suite Telegram Bot is fully operational!");
+
+  try {
+    await bot.telegram.setMyCommands([
+      { command: 'start', description: 'Power up the MMV Productivity Workspace' },
+      { command: 'help', description: 'Comprehensive guide & command usage examples' },
+      { command: 'habits', description: 'Review your daily habits and tracking checklists' },
+      { command: 'tasks', description: 'Review pending high priority tasks' },
+      { command: 'addtask', description: 'Create a new todo milestone immediately' },
+      { command: 'finance', description: 'Review revenue, spending buffers, and balances' },
+      { command: 'addexpense', description: 'Log a new expense' },
+      { command: 'addincome', description: 'Log new income earnings' },
+      { command: 'goals', description: 'Check custom saving targets progress' }
+    ]);
+  } catch (cmdErr) {
+    console.warn("Notice: Could not set bot commands menu automatically:", cmdErr);
+  }
   
   // WAKE UP SCRIPT: Keep Supabase active
   // Free Supabase databases pause due to inactivity. We prevent this by doing a simple keep-alive ping.
