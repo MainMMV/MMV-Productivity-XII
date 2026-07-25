@@ -6,7 +6,6 @@
     }
   ],
   "hosting": {
-    "site": "polished-operation-9k8sk",
     "public": "dist",
     "ignore": [
       "firebase.json",
