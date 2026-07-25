@@ -565,6 +565,17 @@ bot.launch().then(() => {
       console.error("Keep-alive exception:", e);
     }
   }, 12 * 60 * 60 * 1000); // Trigger once every 12 hours
+}).catch((err: any) => {
+  console.error("❌ Failed to start Telegram Bot!");
+  if (err?.response?.error_code === 404 || err?.message?.includes("404")) {
+    console.error("⛔ CAUSE: The TELEGRAM_BOT_TOKEN provided is invalid, deleted, or contains typos!");
+    console.error("💡 SOLUTION:");
+    console.error("  1. Open Telegram and search for @BotFather");
+    console.error("  2. Send /token or /newbot to get your official bot HTTP API Token.");
+    console.error("  3. Set TELEGRAM_BOT_TOKEN=<your_real_token> in telegram-bot/.env file (without quotes or spaces).");
+  } else {
+    console.error("Error details:", err);
+  }
 });
 
 // Enable graceful stop
