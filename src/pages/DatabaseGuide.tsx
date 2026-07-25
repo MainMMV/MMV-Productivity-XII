@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Flame, 
-  Cloud, 
-  FileSpreadsheet, 
   HardDrive, 
   ShieldCheck, 
   Lock, 
@@ -16,7 +14,6 @@ import {
   Wrench,
   AlertTriangle,
   ExternalLink,
-  CheckCircle2,
   Settings as SettingsIcon,
   Globe,
   Database,

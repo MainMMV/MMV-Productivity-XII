@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Bookmark, Folder, Link as LinkIcon, Plus, MoreVertical, Trash2, Edit2, Download, Upload, FolderOpen, ArrowLeft } from 'lucide-react';
+import { Bookmark, Link as LinkIcon, Plus, MoreVertical, Trash2, Edit2, Download, Upload, FolderOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';

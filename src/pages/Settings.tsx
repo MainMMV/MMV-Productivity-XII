@@ -9,24 +9,12 @@ import {
   Monitor, 
   Bell, 
   User, 
-  Lock, 
   Save, 
   Check, 
   Eye, 
   EyeOff,
   LogOut,
-  Smartphone,
-  Download,
-  Share2,
-  Globe,
-  AppWindow,
-  Send,
-  HelpCircle,
-  Users,
-  Copy,
-  ExternalLink,
-  Info,
-  ShieldAlert
+  Globe
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -123,11 +111,9 @@ export default function Settings() {
          await createUserWithEmailAndPassword(auth, email, password);
          setAuthMsg("Successfully registered! Syncing your account...");
          toast.success("Registered successfully!");
-         setTimeout(() => window.location.reload(), 1000);
       } else {
          await signInWithEmailAndPassword(auth, email, password);
          toast.success("Logged in successfully!");
-         setTimeout(() => window.location.reload(), 1000);
       }
     } catch (err: any) {
       if (err.code === 'auth/invalid-credential') {
@@ -154,7 +140,6 @@ export default function Settings() {
 
       await signInWithPopup(auth, googleProvider);
       toast.success("Logged in with Google successfully!");
-      setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
       if (err.code === 'auth/unauthorized-domain') {
         toast.error(`Please add ${window.location.hostname} to Authorized Domains in Firebase Console -> Authentication -> Settings.`);

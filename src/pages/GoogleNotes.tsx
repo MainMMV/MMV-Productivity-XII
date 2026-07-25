@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGoogleAuth } from '@/lib/googleAuth';
 import { googleApi, GoogleDriveFile } from '@/lib/googleApi';
@@ -11,14 +12,12 @@ import {
   Lightbulb, 
   Plus, 
   Trash2, 
-  Sparkles, 
   Search, 
   ChevronRight, 
   Check, 
   Pin,
   RefreshCw,
   FolderOpen,
-  ArrowRight,
   AlertTriangle,
   Wrench,
   ExternalLink

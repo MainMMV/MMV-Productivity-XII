@@ -1,9 +1,7 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { appParams } from '@/lib/app-params';
 import { getRedirectResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import axios from 'axios';
 
 const AuthContext = createContext<any>(null);
 
@@ -11,66 +9,61 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
+  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(false);
   const [authError, setAuthError] = useState<any>(null);
   const [authChecked, setAuthChecked] = useState(false);
-  const [appPublicSettings, setAppPublicSettings] = useState<any>(null);
+  const [appPublicSettings, setAppPublicSettings] = useState<any>({ name: "MMV Productivity" });
 
   useEffect(() => {
-    checkAppState();
+    // Check Google auth redirect results asynchronously in background without blocking
+    getRedirectResult(auth).catch((redirectError) => {
+      console.warn("Background auth redirect check:", redirectError);
+    });
+
+    // Real-time listener for Firebase auth state updates
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      if (firebaseUser) {
+        const formattedUser = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email,
+          user_metadata: {
+            full_name: firebaseUser.displayName,
+            avatar_url: firebaseUser.photoURL,
+            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || "User"
+          }
+        };
+        setUser(formattedUser);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+      setIsLoadingAuth(false);
+      setIsLoadingPublicSettings(false);
+      setAuthChecked(true);
+    });
+
+    // Safety fallback: ensure loading screen is unblocked within 800ms max
+    const safetyTimer = setTimeout(() => {
+      setIsLoadingAuth(false);
+      setIsLoadingPublicSettings(false);
+      setAuthChecked(true);
+    }, 800);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
-  const checkAppState = async () => {
-    try {
-      setIsLoadingPublicSettings(true);
-      setAuthError(null);
-      setAppPublicSettings({ name: "Local App" });
-      
-      // Catch any auth redirect results first
-      try {
-        await getRedirectResult(auth);
-      } catch (redirectError) {
-        console.error("Auth redirect resolution error:", redirectError);
-      }
-
-      await checkUserAuth();
-      setIsLoadingPublicSettings(false);
-    } catch (appError: any) {
-      console.error('App state check failed:', appError);
-      setIsLoadingPublicSettings(false);
-      setIsLoadingAuth(false);
-    }
-  };
-
-  const checkUserAuth = async () => {
-    try {
-      setIsLoadingAuth(true);
-      
-      const mePromise = base44.auth.me();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Auth check timed out")), 5000)
-      );
-
-      const currentUser = await Promise.race([mePromise, timeoutPromise]);
-      setUser(currentUser);
-      setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
-    } catch (error: any) {
-      console.warn('User auth check failed:', error);
-      setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      // Removed the logic that sets authError here, because we want the app 
-      // to continue running even if the user is not authenticated.
-      // We are just unauthenticated now and let local storage take over.
-    }
-  };
-
-  const logout = (shouldRedirect = true) => {
+  const logout = async () => {
     setUser(null);
     setIsAuthenticated(false);
-    base44.auth.logout(shouldRedirect ? window.location.href : undefined);
+    try {
+      await auth.signOut();
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
   };
 
   const navigateToLogin = () => {
@@ -88,8 +81,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       authChecked,
       logout,
       navigateToLogin,
-      checkUserAuth,
-      checkAppState
+      checkUserAuth: () => {},
+      checkAppState: () => {}
     }}>
       {children}
     </AuthContext.Provider>
@@ -103,3 +96,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

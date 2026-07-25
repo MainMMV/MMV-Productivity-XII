@@ -139,7 +139,17 @@ function createEntity(tableName: string) {
 export const base44 = {
   auth: {
     me: async () => {
-      // Return a promise that resolves when onAuthStateChanged fires initially
+      if (auth.currentUser) {
+        setAuthState(true);
+        return {
+          id: auth.currentUser.uid,
+          email: auth.currentUser.email,
+          user_metadata: {
+            full_name: auth.currentUser.displayName,
+            avatar_url: auth.currentUser.photoURL
+          }
+        };
+      }
       return new Promise((resolve, reject) => {
         const unsubscribe = auth.onAuthStateChanged(user => {
           unsubscribe();
@@ -163,7 +173,6 @@ export const base44 = {
     logout: async () => {
       setAuthState(false);
       await auth.signOut();
-      window.location.reload();
     },
     redirectToLogin: () => {}
   },

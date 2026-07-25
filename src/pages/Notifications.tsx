@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Bell, AlertCircle, Clock, CheckCircle, TrendingDown, Flame, Check, Play } from "lucide-react";
+import { ArrowLeft, Bell, Clock, CheckCircle, TrendingDown, Flame, Check, Play } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useSettings } from "@/lib/useSettings";
 import { Button } from "@/components/ui/button";
