@@ -85,10 +85,13 @@ async function getOrCreateSupabaseUser(tgUser: { id: number, first_name: string,
 // Setup commands schema for Bot menu button preview
 bot.telegram.setMyCommands([
   { command: 'start', description: 'Power up the MMV Productivity Workspace' },
+  { command: 'help', description: 'Comprehensive guide & command usage examples' },
   { command: 'habits', description: 'Review your daily habits and tracking checklists' },
   { command: 'tasks', description: 'Review pending high priority tasks' },
   { command: 'addtask', description: 'Create a new todo milestone immediately' },
   { command: 'finance', description: 'Review revenue, spending buffers, and balances' },
+  { command: 'addexpense', description: 'Log a new expense' },
+  { command: 'addincome', description: 'Log new income earnings' },
   { command: 'goals', description: 'Check custom saving targets progress' }
 ]);
 
@@ -100,7 +103,7 @@ bot.start(async (ctx) => {
     const first_name = tgUser.first_name;
     
     await ctx.replyWithChatAction('typing');
-    const userId = await getOrCreateSupabaseUser(tgUser);
+    await getOrCreateSupabaseUser(tgUser);
 
     const message = `
 👋 *Welcome, ${first_name} to the MMV Productivity Webhook Companion!*
@@ -115,7 +118,7 @@ Running via native highly-performant Node.js webhook controller.
 💸 /addexpense \`<amount> <category> [note]\` - Log a cost
 💰 /addincome \`<amount> <source> [note]\` - Log earnings
 📈 /goals - Milestone checklists
-⚙️ /settings - Configure preferences
+❓ /help - Comprehensive guide & command usage examples
 
 ⭐ *Launch Premium Mini App:*
 Click the persistent action menu below to deploy the full-screen visual suite!
@@ -131,6 +134,51 @@ Click the persistent action menu below to deploy the full-screen visual suite!
   } catch (error: any) {
     ctx.reply(`⚠️ Webhook login sync issue: ${error.message}`);
   }
+});
+
+// /help command
+bot.help(async (ctx) => {
+  const helpText = `
+📖 *MMV Productivity Bot - Command Guide & Manual*
+
+Here is the complete command list and how to use each feature:
+
+🌸 *HABITS & DAILY ROUTINES*
+• /habits
+  └ Lists all your active daily habits with current streaks. Click the inline button to complete a habit for today!
+
+🎯 *TASK & MILESTONE MANAGEMENT*
+• /tasks
+  └ Lists your pending tasks sorted by due date and priority.
+• /addtask \`<Task Title>\`
+  └ Quick-add a new task directly from chat.
+  _Example:_ \`/addtask Finish client proposal\`
+
+💰 *FINANCE & BUDGET LOGGING*
+• /finance
+  └ Displays total income, total expenses, and clean net balance.
+• /addexpense \`<Amount> <Category> [Optional Note]\`
+  └ Logs a cost into your ledger.
+  _Example:_ \`/addexpense 12.00 transport Taxi fare\`
+• /addincome \`<Amount> <Source> [Optional Note]\`
+  └ Logs earnings into your account.
+  _Example:_ \`/addincome 800 salary Monthly payment\`
+
+📈 *GOALS & SAVINGS TRACKER*
+• /goals
+  └ Shows visual progress bars for all your active financial and target goals.
+
+💼 *MINI APP DASHBOARD*
+• Tap "💼 Open MMV Mini App" anywhere in chat to open the full interactive Web Application inside Telegram!
+`;
+
+  await ctx.replyWithMarkdownV2(
+    helpText.replace(/_/g, '\\_').replace(/\*/g, '\\*').replace(/\[/g, '\\[').replace(/\]/g, '\\]').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/~/g, '\\~').replace(/`/g, '\\`').replace(/\!/g, '\\!').replace(/\./g, '\\.').replace(/-/g, '\\-').replace(/\+/g, '\\+').replace(/\=/g, '\\='),
+    Markup.inlineKeyboard([
+      [Markup.button.webApp("🚀 Open MMV Mini App", WEBAPP_URL)],
+      [Markup.button.callback("📅 View Habits", "view_habits"), Markup.button.callback("🎯 View Tasks", "view_tasks")]
+    ])
+  );
 });
 
 // /habits list command
