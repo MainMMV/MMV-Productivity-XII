@@ -105,32 +105,32 @@ async function getOrCreateSupabaseUser(tgUser: { id: number, first_name: string,
 bot.start(async (ctx) => {
   try {
     const tgUser = ctx.from;
-    const first_name = tgUser.first_name;
+    const first_name = tgUser.first_name || 'User';
     
     await ctx.replyWithChatAction('typing');
     await getOrCreateSupabaseUser(tgUser);
 
     const message = `
-👋 *Welcome, ${first_name} to the MMV Productivity Suite!*
+👋 <b>Welcome, ${first_name} to the MMV Productivity Suite!</b>
 
 Experience absolute control over your day, habits, finances, and lifecycle milestones inside this workspace.
 
-⚡ *Bot Commands Quick Index:*
+⚡ <b>Bot Commands Quick Index:</b>
 📅 /habits - Manage habits & mark progress
 🎯 /tasks - Review milestones & tasks
-➕ /addtask \`<title>\` - Quick-add target tasks
+➕ /addtask &lt;title&gt; - Quick-add target tasks
 📊 /finance - View budget metrics
-💸 /addexpense \`<amount> <category> [note]\` - Log a cost
-💰 /addincome \`<amount> <source> [note]\` - Log earnings
+💸 /addexpense &lt;amount&gt; &lt;category&gt; [note] - Log a cost
+💰 /addincome &lt;amount&gt; &lt;source&gt; [note] - Log earnings
 📈 /goals - Milestone checklists
 ❓ /help - Detailed user manual & usage examples
 
-⭐ *Launch Premium Mini App:*
+⭐ <b>Launch Premium Mini App:</b>
 Tap the button below to load the full visual dashboard!
 `;
 
-    ctx.replyWithMarkdownV2(
-      message.replace(/_/g, '\\_').replace(/\*/g, '\\*').replace(/\[/g, '\\[').replace(/\]/g, '\\]').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/~/g, '\\~').replace(/`/g, '\\`').replace(/\!/g, '\\!').replace(/\./g, '\\.').replace(/-/g, '\\-').replace(/\+/g, '\\+').replace(/\=/g, '\\='),
+    await ctx.replyWithHTML(
+      message,
       Markup.inlineKeyboard([
         [Markup.button.webApp("💼 Open MMV Mini App", WEBAPP_URL)],
         [Markup.button.callback("📅 Habits Today", "view_habits"), Markup.button.callback("🎯 Interactive Tasks", "view_tasks")]
@@ -144,41 +144,41 @@ Tap the button below to load the full visual dashboard!
 // /help command
 bot.help(async (ctx) => {
   const helpText = `
-📖 *MMV Productivity Bot - Command Guide & Manual*
+📖 <b>MMV Productivity Bot - Command Guide & Manual</b>
 
 Here is the complete command list and how to use each feature:
 
-🌸 *HABITS & DAILY ROUTINES*
+🌸 <b>HABITS & DAILY ROUTINES</b>
 • /habits
   └ Lists all your active daily habits with current streaks. Click the inline button to complete a habit for today!
 
-🎯 *TASK & MILESTONE MANAGEMENT*
+🎯 <b>TASK & MILESTONE MANAGEMENT</b>
 • /tasks
   └ Lists your pending tasks sorted by due date and priority.
-• /addtask \`<Task Title>\`
+• /addtask &lt;Task Title&gt;
   └ Quick-add a new task directly from chat.
-  _Example:_ \`/addtask Design landing page UI\`
+  <i>Example:</i> <code>/addtask Design landing page UI</code>
 
-💰 *FINANCE & BUDGET LOGGING*
+💰 <b>FINANCE & BUDGET LOGGING</b>
 • /finance
   └ Displays total income, total expenses, and clean net balance.
-• /addexpense \`<Amount> <Category> [Optional Note]\`
+• /addexpense &lt;Amount&gt; &lt;Category&gt; [Optional Note]
   └ Logs a cost into your ledger.
-  _Example:_ \`/addexpense 15.50 food Lunch with client\`
-• /addincome \`<Amount> <Source> [Optional Note]\`
+  <i>Example:</i> <code>/addexpense 15.50 food Lunch with client</code>
+• /addincome &lt;Amount&gt; &lt;Source&gt; [Optional Note]
   └ Logs earnings into your account.
-  _Example:_ \`/addincome 500 freelancing Web Design Project\`
+  <i>Example:</i> <code>/addincome 500 freelancing Web Design Project</code>
 
-📈 *GOALS & SAVINGS TRACKER*
+📈 <b>GOALS & SAVINGS TRACKER</b>
 • /goals
   └ Shows visual progress bars for all your active financial and target goals.
 
-💼 *MINI APP DASHBOARD*
+💼 <b>MINI APP DASHBOARD</b>
 • Tap "💼 Open MMV Mini App" anywhere in chat to open the full interactive Web Application inside Telegram!
 `;
 
-  await ctx.replyWithMarkdownV2(
-    helpText.replace(/_/g, '\\_').replace(/\*/g, '\\*').replace(/\[/g, '\\[').replace(/\]/g, '\\]').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/~/g, '\\~').replace(/`/g, '\\`').replace(/\!/g, '\\!').replace(/\./g, '\\.').replace(/-/g, '\\-').replace(/\+/g, '\\+').replace(/\=/g, '\\='),
+  await ctx.replyWithHTML(
+    helpText,
     Markup.inlineKeyboard([
       [Markup.button.webApp("🚀 Open MMV Mini App", WEBAPP_URL)],
       [Markup.button.callback("📅 View Habits", "view_habits"), Markup.button.callback("🎯 View Tasks", "view_tasks")]
