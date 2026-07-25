@@ -1,23 +1,47 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Flame, CheckCircle, Wallet, Target, Settings, ChevronLeft, ChevronRight, Calendar, FileText, Menu, X, Bookmark, Database, Bot } from 'lucide-react';
+import { Home, Flame, CheckCircle, Wallet, Target, Settings, ChevronLeft, ChevronRight, Calendar, FileText, Menu, X, Bookmark, Database, Bot, ChevronDown, ChevronUp, Cloud, File, Table, CheckSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '@/lib/useNotifications';
 import { useSettings } from '@/lib/useSettings';
 import { useState, useEffect } from 'react';
 import { DatabaseWakeup } from './DatabaseWakeup';
 
-const NAV_ITEMS = [
-  { path: '/', label: 'Home', icon: Home },
-  { path: '/habits', label: 'Habits', icon: Flame },
-  { path: '/tasks', label: 'Tasks', icon: CheckCircle },
-  { path: '/finance', label: 'Finance', icon: Wallet },
-  { path: '/goals', label: 'Goals', icon: Target },
-  { path: '/calendar', label: 'Calendar', icon: Calendar },
-  { path: '/notes', label: 'Notes', icon: FileText },
-  { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
-  { path: '/data', label: 'Data Hub', icon: Database },
-  { path: '/sync', label: 'Google & Bot Sync', icon: Bot },
-  { path: '/settings', label: 'Settings', icon: Settings },
+const NAV_GROUPS = [
+  {
+    name: 'Dashboard',
+    items: [
+      { path: '/', label: 'Home', icon: Home },
+    ]
+  },
+  {
+    name: 'Productivity',
+    items: [
+      { path: '/habits', label: 'Habits', icon: Flame },
+      { path: '/tasks', label: 'Tasks', icon: CheckCircle },
+      { path: '/finance', label: 'Finance', icon: Wallet },
+      { path: '/goals', label: 'Goals', icon: Target },
+    ]
+  },
+  {
+    name: 'Workspace',
+    items: [
+      { path: '/calendar', label: 'Calendar', icon: Calendar },
+      { path: '/drive', label: 'Drive', icon: Cloud },
+      { path: '/docs', label: 'Docs', icon: File },
+      { path: '/sheets', label: 'Sheets', icon: Table },
+      { path: '/google-tasks', label: 'G-Tasks', icon: CheckSquare },
+      { path: '/notes', label: 'Notes', icon: FileText },
+      { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
+    ]
+  },
+  {
+    name: 'System & Settings',
+    items: [
+      { path: '/data', label: 'Data Hub', icon: Database },
+      { path: '/sync', label: 'Google & Bot Sync', icon: Bot },
+      { path: '/settings', label: 'Settings', icon: Settings },
+    ]
+  }
 ];
 
 export default function AppLayout() {
@@ -25,7 +49,12 @@ export default function AppLayout() {
   const { settings } = useSettings();
   const [isCollapsed, setIsCollapsed] = useState(window.innerWidth < 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   useNotifications();
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroup(prev => prev === groupName ? null : groupName);
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -97,36 +126,65 @@ export default function AppLayout() {
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
-        <nav className="flex-1 overflow-y-auto scrollbar-none pb-4">
-          <ul className="flex flex-col gap-1.5">
-            {NAV_ITEMS.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
-              return (
-                <li key={item.path}>
-                  <Link 
-                    to={item.path} 
-                    className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-4'} py-3 rounded-xl transition-all relative ${
-                      isActive 
-                        ? 'bg-primary/10 text-primary font-bold' 
-                        : 'text-muted-foreground hover:bg-primary/5 hover:text-primary font-medium'
-                    }`}
+        <nav className="flex-1 overflow-y-auto scrollbar-none pb-4 mt-2">
+          <div className="flex flex-col gap-4">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.name} className="flex flex-col gap-1">
+                {!isCollapsed && group.name !== 'Dashboard' && (
+                  <button 
+                    onClick={() => toggleGroup(group.name)}
+                    className="flex items-center justify-between px-5 py-1 text-[11px] font-bold text-muted-foreground/70 hover:text-foreground transition-colors group"
                   >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
-                    {isActive && (
-                      <motion.div
-                        layoutId="sidebar-active"
-                        className={`absolute left-0 bg-primary ${isCollapsed ? 'w-1 h-6 rounded-r-full' : 'w-1 h-8 rounded-r-full'}`}
-                        initial={false}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+                    <span className="uppercase tracking-wider">{group.name}</span>
+                    {expandedGroup === group.name ? <ChevronUp className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100" /> : <ChevronDown className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100" />}
+                  </button>
+                )}
+                {isCollapsed && group.name !== 'Dashboard' && (
+                  <div className="w-full h-px bg-border my-1" />
+                )}
+                
+                <AnimatePresence initial={false}>
+                  {(!isCollapsed ? expandedGroup === group.name || group.name === 'Dashboard' : true) && (
+                    <motion.ul 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col gap-1.5 overflow-hidden px-2"
+                    >
+                      {group.items.map((item) => {
+                        const isActive = location.pathname === item.path;
+                        const Icon = item.icon;
+                        return (
+                          <li key={item.path}>
+                            <Link 
+                              to={item.path} 
+                              className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all relative ${
+                                isActive 
+                                  ? 'bg-primary/10 text-primary font-bold' 
+                                  : 'text-muted-foreground hover:bg-primary/5 hover:text-primary font-medium'
+                              }`}
+                            >
+                              <Icon className="w-5 h-5 flex-shrink-0" />
+                              {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
+                              {isActive && (
+                                <motion.div
+                                  layoutId="sidebar-active"
+                                  className={`absolute left-0 bg-primary ${isCollapsed ? 'w-1 h-6 rounded-r-full' : 'w-1 h-8 rounded-r-full'}`}
+                                  initial={false}
+                                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                />
+                              )}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
         </nav>
       </motion.aside>
 
@@ -182,27 +240,54 @@ export default function AppLayout() {
                 </button>
               </div>
               <nav className="flex-1 overflow-y-auto p-4 scrollbar-none">
-                <ul className="flex flex-col gap-2">
-                  {NAV_ITEMS.map((item) => {
-                    const isActive = location.pathname === item.path;
-                    const Icon = item.icon;
-                    return (
-                      <li key={item.path}>
-                        <Link 
-                          to={item.path} 
-                          className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
-                            isActive 
-                              ? 'bg-primary/10 text-primary font-bold shadow-xs border border-primary/20' 
-                              : 'text-muted-foreground hover:bg-primary/5 hover:text-primary font-medium border border-transparent'
-                          }`}
+                <div className="flex flex-col gap-4">
+                  {NAV_GROUPS.map((group) => (
+                    <div key={group.name} className="flex flex-col gap-1">
+                      {group.name !== 'Dashboard' && (
+                        <button 
+                          onClick={() => toggleGroup(group.name)}
+                          className="flex items-center justify-between px-2 py-1 text-[11px] font-bold text-muted-foreground/70 hover:text-foreground transition-colors group"
                         >
-                          <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground/70'}`} />
-                          <span className="text-sm">{item.label}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
+                          <span className="uppercase tracking-wider">{group.name}</span>
+                          {expandedGroup === group.name ? <ChevronUp className="w-4 h-4 opacity-50 group-hover:opacity-100" /> : <ChevronDown className="w-4 h-4 opacity-50 group-hover:opacity-100" />}
+                        </button>
+                      )}
+                      
+                      <AnimatePresence initial={false}>
+                        {(expandedGroup === group.name || group.name === 'Dashboard') && (
+                          <motion.ul 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex flex-col gap-1.5 overflow-hidden"
+                          >
+                            {group.items.map((item) => {
+                              const isActive = location.pathname === item.path;
+                              const Icon = item.icon;
+                              return (
+                                <li key={item.path}>
+                                  <Link 
+                                    to={item.path} 
+                                    className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
+                                      isActive 
+                                        ? 'bg-primary/10 text-primary font-bold shadow-xs border border-primary/20' 
+                                        : 'text-muted-foreground hover:bg-primary/5 hover:text-primary font-medium border border-transparent'
+                                    }`}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                  >
+                                    <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground/70'}`} />
+                                    <span className="text-sm">{item.label}</span>
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </motion.ul>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
               </nav>
             </motion.div>
           </>

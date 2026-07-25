@@ -17,6 +17,10 @@ import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import GoogleCalendar from './pages/GoogleCalendar';
 import GoogleNotes from './pages/GoogleNotes';
+import GoogleDrive from './pages/GoogleDrive';
+import GoogleDocs from './pages/GoogleDocs';
+import GoogleSheets from './pages/GoogleSheets';
+import GoogleTasks from './pages/GoogleTasks';
 import Bookmarks from './pages/Bookmarks';
 import DatabaseGuide from './pages/DatabaseGuide';
 import TelegramSync from './pages/TelegramSync';
@@ -55,6 +59,10 @@ const AuthenticatedApp = () => {
         <Route path="/finance" element={<Finance />} />
         <Route path="/goals" element={<Goals />} />
         <Route path="/calendar" element={<GoogleCalendar />} />
+        <Route path="/drive" element={<GoogleDrive />} />
+        <Route path="/docs" element={<GoogleDocs />} />
+        <Route path="/sheets" element={<GoogleSheets />} />
+        <Route path="/google-tasks" element={<GoogleTasks />} />
         <Route path="/notes" element={<GoogleNotes />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/data" element={<DatabaseGuide />} />
