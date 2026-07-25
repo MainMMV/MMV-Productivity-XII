@@ -5,7 +5,10 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-const rawBotToken = process.env.TELEGRAM_BOT_TOKEN;
+let rawBotToken = process.env.TELEGRAM_BOT_TOKEN || "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
+// Clean up any extra quotes or whitespace
+rawBotToken = rawBotToken.trim().replace(/^["']|["']$/g, '');
+
 const BOT_TOKEN = (rawBotToken && !rawBotToken.toUpperCase().includes("YOUR_BOT")) 
   ? rawBotToken 
   : "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";

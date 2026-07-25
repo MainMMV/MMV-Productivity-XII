@@ -7,7 +7,9 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const PORT = process.env.PORT || 3001; // Can run alongside web app or independently
-const rawBotToken = process.env.TELEGRAM_BOT_TOKEN;
+let rawBotToken = process.env.TELEGRAM_BOT_TOKEN || "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
+rawBotToken = rawBotToken.trim().replace(/^["']|["']$/g, '');
+
 const BOT_TOKEN = (rawBotToken && !rawBotToken.toUpperCase().includes("YOUR_BOT")) 
   ? rawBotToken 
   : "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
