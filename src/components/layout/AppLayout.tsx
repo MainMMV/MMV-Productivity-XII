@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Flame, CheckCircle, Wallet, Target, Settings, ChevronLeft, ChevronRight, Calendar, FileText, Menu, X, Bookmark, Database } from 'lucide-react';
+import { Home, Flame, CheckCircle, Wallet, Target, Settings, ChevronLeft, ChevronRight, Calendar, FileText, Menu, X, Bookmark, Database, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '@/lib/useNotifications';
 import { useSettings } from '@/lib/useSettings';
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { path: '/notes', label: 'Notes', icon: FileText },
   { path: '/bookmarks', label: 'Bookmarks', icon: Bookmark },
   { path: '/data', label: 'Data Hub', icon: Database },
+  { path: '/sync', label: 'Google & Bot Sync', icon: Bot },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

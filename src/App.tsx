@@ -19,6 +19,7 @@ import GoogleCalendar from './pages/GoogleCalendar';
 import GoogleNotes from './pages/GoogleNotes';
 import Bookmarks from './pages/Bookmarks';
 import DatabaseGuide from './pages/DatabaseGuide';
+import TelegramSync from './pages/TelegramSync';
 
 import { useEffect } from 'react';
 
@@ -57,6 +58,7 @@ const AuthenticatedApp = () => {
         <Route path="/notes" element={<GoogleNotes />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/data" element={<DatabaseGuide />} />
+        <Route path="/sync" element={<TelegramSync />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/notifications" element={<Notifications />} />
       </Route>
