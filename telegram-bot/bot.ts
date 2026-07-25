@@ -5,12 +5,15 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-let rawBotToken = process.env.TELEGRAM_BOT_TOKEN || "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
-// Clean up any extra quotes or whitespace
-rawBotToken = rawBotToken.trim().replace(/^["']|["']$/g, '');
+let rawBotToken = process.env.TELEGRAM_BOT_TOKEN;
+if (rawBotToken) {
+  rawBotToken = rawBotToken.trim().replace(/^["']|["']$/g, '');
+}
 
-const BOT_TOKEN = (rawBotToken && !rawBotToken.toUpperCase().includes("YOUR_BOT")) 
-  ? rawBotToken 
+const isTelegramToken = (token?: string) => Boolean(token && /^\d+:[A-Za-z0-9_-]{30,}$/.test(token) && !token.toUpperCase().includes("YOUR_"));
+
+const BOT_TOKEN = isTelegramToken(rawBotToken) 
+  ? rawBotToken! 
   : "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://ysjzqffgrzwklxlbwdby.supabase.co";
 // Client-side key or service role key which allows bypassing RLS for bot actions

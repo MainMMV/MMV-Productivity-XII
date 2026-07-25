@@ -7,11 +7,15 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const PORT = process.env.PORT || 3001; // Can run alongside web app or independently
-let rawBotToken = process.env.TELEGRAM_BOT_TOKEN || "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
-rawBotToken = rawBotToken.trim().replace(/^["']|["']$/g, '');
+let rawBotToken = process.env.TELEGRAM_BOT_TOKEN;
+if (rawBotToken) {
+  rawBotToken = rawBotToken.trim().replace(/^["']|["']$/g, '');
+}
 
-const BOT_TOKEN = (rawBotToken && !rawBotToken.toUpperCase().includes("YOUR_BOT")) 
-  ? rawBotToken 
+const isTelegramToken = (token?: string) => Boolean(token && /^\d+:[A-Za-z0-9_-]{30,}$/.test(token) && !token.toUpperCase().includes("YOUR_"));
+
+const BOT_TOKEN = isTelegramToken(rawBotToken) 
+  ? rawBotToken! 
   : "8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo";
 const WEBHOOK_DOMAIN = process.env.TELEGRAM_WEBHOOK_DOMAIN || "https://mmvproductivityxii.vercel.app"; // e.g. "https://my-app.run.app"
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://ysjzqffgrzwklxlbwdby.supabase.co";
