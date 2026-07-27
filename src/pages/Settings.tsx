@@ -156,9 +156,8 @@ export default function Settings() {
       updateSettings({
         theme_mode: "system",
         theme_preset: "default",
-        theme_hue: 258,
+        theme_hue: 220,
         border_radius_percentage: 35,
-        animation_timing: "ease",
         container_width: "100%",
         calendar_start_day: "Sunday",
         currency_primary: "USD",
@@ -313,7 +312,8 @@ export default function Settings() {
                 { val: "slate", label: "Steel Slate", preview: "bg-slate-100 dark:bg-slate-900 border-slate-200", accent: "bg-sky-500" },
                 { val: "sand", label: "Desert Sand", preview: "bg-amber-50/50 dark:bg-amber-950/20 border-orange-200/50", accent: "bg-amber-600" },
                 { val: "mint", label: "Forest Mint", preview: "bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-200/50", accent: "bg-emerald-500" },
-                { val: "obsidian", label: "Midnight Obsidian", preview: "bg-neutral-950 border-neutral-800", accent: "bg-violet-600" }
+                { val: "obsidian", label: "Midnight Obsidian", preview: "bg-neutral-950 border-neutral-800", accent: "bg-violet-600" },
+                { val: "mindora", label: "Mindora Calm", preview: "bg-[#F1F5F4] dark:bg-[#2F3E46] border-[#A7C7E7]/50", accent: "bg-[#5E8B7E]" }
               ].map((p) => {
                 const isSelected = (settings as any).theme_preset === p.val || (p.val === "default" && !(settings as any).theme_preset);
                 return (
@@ -323,7 +323,7 @@ export default function Settings() {
                     onClick={() => {
                       updateSettings({ 
                         theme_preset: p.val,
-                        theme_hue: p.val === "slate" ? 210 : p.val === "sand" ? 34 : p.val === "mint" ? 145 : p.val === "obsidian" ? 265 : 220
+                        theme_hue: p.val === "slate" ? 210 : p.val === "sand" ? 34 : p.val === "mint" ? 145 : p.val === "obsidian" ? 265 : p.val === "mindora" ? 163 : 220
                       });
                     }}
                     className={`flex flex-col gap-2 p-3 rounded-2xl border text-left transition-all ${
@@ -350,7 +350,7 @@ export default function Settings() {
           <p className="text-xs font-bold mb-4">Accent Color</p>
           <div className="grid grid-cols-6 gap-x-2 gap-y-4">
             {ALL_HUES.map(preset => (
-              <button key={preset.hue} onClick={() => updateSettings({ theme_hue: preset.hue })}
+              <button key={preset.hue} onClick={() => updateSettings({ theme_hue: preset.hue, theme_preset: "default" })}
                 className="flex flex-col items-center gap-2">
                 <div className={`w-10 h-10 rounded-2xl border-2 transition-all ${settings.theme_hue === preset.hue ? "border-foreground scale-110 shadow-lg" : "border-transparent"}`}
                   style={{ backgroundColor: preset.color }} />
@@ -361,7 +361,7 @@ export default function Settings() {
           
           <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
             <Label className="text-xs font-bold">Custom hue (0-360)</Label>
-            <Input type="number" min="0" max="360" value={settings.theme_hue} onChange={e => updateSettings({ theme_hue: parseInt(e.target.value) || 258 })} className="rounded-xl h-9 w-24 text-xs font-bold text-center" />
+            <Input type="number" min="0" max="360" value={settings.theme_hue} onChange={e => updateSettings({ theme_hue: parseInt(e.target.value) || 0, theme_preset: "default" })} className="rounded-xl h-9 w-24 text-xs font-bold text-center" />
           </div>
           
           <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
@@ -376,33 +376,10 @@ export default function Settings() {
                 max="75" 
                 value={settings.border_radius_percentage ?? 35} 
                 onChange={e => updateSettings({ border_radius_percentage: parseInt(e.target.value) })}
-                className="w-24 accent-primary"
+                className="w-28 accent-primary cursor-pointer"
               />
               <span className="text-xs font-bold text-muted-foreground w-8 text-right">{settings.border_radius_percentage ?? 35}%</span>
             </div>
-          </div>
-
-          <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
-            <Label className="text-xs font-bold flex flex-col">
-              Animation Timing
-              <span className="text-[10px] text-muted-foreground font-medium">Custom animation bezier</span>
-            </Label>
-            <Select 
-              value={(settings as any).animation_timing || "ease"} 
-              onValueChange={v => updateSettings({ animation_timing: v })}
-            >
-              <SelectTrigger className="w-32 rounded-xl h-9 text-xs">
-                <SelectValue placeholder="Easing" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ease">Ease</SelectItem>
-                <SelectItem value="ease-in">Ease In</SelectItem>
-                <SelectItem value="ease-out">Ease Out</SelectItem>
-                <SelectItem value="ease-in-out">Ease In Out</SelectItem>
-                <SelectItem value="linear">Linear</SelectItem>
-                <SelectItem value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">Bouncy</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
@@ -414,14 +391,15 @@ export default function Settings() {
               value={(settings as any).container_width || "100%"} 
               onValueChange={v => updateSettings({ container_width: v })}
             >
-              <SelectTrigger className="w-32 rounded-xl h-9 text-xs">
+              <SelectTrigger className="w-36 rounded-xl h-9 text-xs font-bold">
                 <SelectValue placeholder="Width" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="100%">100% (Full)</SelectItem>
+                <SelectItem value="100%">100% (Full Width)</SelectItem>
                 <SelectItem value="90%">90% Width</SelectItem>
                 <SelectItem value="80%">80% Width</SelectItem>
-                <SelectItem value="1024px">1024px Max</SelectItem>
+                <SelectItem value="1280px">1280px Max</SelectItem>
+                <SelectItem value="1024px">1024px Compact</SelectItem>
               </SelectContent>
             </Select>
           </div>

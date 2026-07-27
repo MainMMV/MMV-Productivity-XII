@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { auth } from "@/lib/firebase";
 
 const DEFAULT_SETTINGS = {
   currency_primary: "USD",
   currency_secondary: "UZS",
   theme_hue: 220,
   theme_mode: "light",
+  theme_preset: "default",
   border_radius_percentage: 35,
-  animation_timing: "ease-in-out",
   container_width: "100%",
   uzs_rate: 12200,
   notifications_enabled: true,
@@ -27,23 +28,42 @@ export function useSettings() {
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Subscribe to auth state changes so settings are automatically loaded for the authenticated user
   useEffect(() => {
-    loadSettings();
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      setLoading(true);
+      await loadSettingsForUser(currentUser);
+    });
+    return () => unsubscribe();
   }, []);
 
   // Apply dynamic theme color and border radius whenever they change
   useEffect(() => {
-    document.documentElement.style.setProperty("--primary", `${settings.theme_hue} 90% 66%`);
-    document.documentElement.style.setProperty("--ring", `${settings.theme_hue} 90% 66%`);
-    document.documentElement.style.setProperty("--chart-1", `${settings.theme_hue} 90% 66%`);
+    let primaryVal = `${settings.theme_hue} 90% 66%`;
     
-    // Border radius: 50% = 1rem (base), 0% = 0rem, 100% = 2rem
+    if ((settings as any).theme_preset === "mindora") {
+      primaryVal = "163 19% 46%"; // #5E8B7E
+    }
+
+    const root = document.documentElement;
+    root.style.setProperty("--primary", primaryVal);
+    root.style.setProperty("--ring", primaryVal);
+    root.style.setProperty("--chart-1", primaryVal);
+    
+    // Border radius calculation: 35% -> 0.7rem, 50% -> 1rem, 0% -> 0rem, 100% -> 2rem
     const radiusVal = typeof settings.border_radius_percentage !== 'undefined' ? settings.border_radius_percentage : 35;
     const radiusRem = (radiusVal / 50) * 1;
-    document.documentElement.style.setProperty("--radius", `${radiusRem}rem`);
-  }, [settings.theme_hue, settings.border_radius_percentage]);
+    
+    root.style.setProperty("--radius", `${radiusRem}rem`);
+    root.style.setProperty("--radius-sm", `${Math.max(0, radiusRem - 0.25)}rem`);
+    root.style.setProperty("--radius-md", `${Math.max(0, radiusRem - 0.125)}rem`);
+    root.style.setProperty("--radius-lg", `${radiusRem}rem`);
+    root.style.setProperty("--radius-xl", `${radiusRem * 1.25}rem`);
+    root.style.setProperty("--radius-2xl", `${radiusRem * 1.5}rem`);
+    root.style.setProperty("--radius-3xl", `${radiusRem * 2}rem`);
+  }, [settings.theme_hue, settings.border_radius_percentage, (settings as any).theme_preset]);
 
-  // Dynamically update favicon and app icon with Poppins text "MMV" and theme matching colors
+  // Dynamically update favicon and app icon
   useEffect(() => {
     const isDark = settings.theme_mode === "dark" || 
       (settings.theme_mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -51,7 +71,6 @@ export function useSettings() {
     const hue = settings.theme_hue || 220;
     const radiusVal = typeof settings.border_radius_percentage !== 'undefined' ? settings.border_radius_percentage : 35;
     
-    // Determine card background and text color based on the current theme preset and light/dark mode
     const presets: Record<string, { card: string; background: string; foreground: string }> = {
       slate: {
         card: isDark ? "222 47% 11%" : "0 0% 100%",
@@ -72,15 +91,16 @@ export function useSettings() {
         card: isDark ? "240 10% 9%" : "0 0% 100%",
         background: isDark ? "240 10% 4.5%" : "240 10% 96%",
         foreground: isDark ? "0 0% 98%" : "240 10% 4%"
+      },
+      mindora: {
+        card: isDark ? "201 20% 18%" : "0 0% 100%",
+        background: isDark ? "201 20% 23%" : "165 17% 95%",
+        foreground: isDark ? "165 17% 95%" : "201 20% 23%"
       }
     };
 
     const preset = presets[(settings as any).theme_preset || "slate"] || presets.slate;
-    
-    // Background color of favicon matches the theme preset's card color
     const bgCol = `hsl(${preset.card})`;
-    
-    // Primary accent and text colors dynamically matched for high-contrast visibility
     const primaryCol = `hsl(${hue}, 90%, 60%)`;
     const textCol = isDark ? `hsl(${hue}, 95%, 72%)` : `hsl(${hue}, 90%, 48%)`;
     
@@ -101,15 +121,10 @@ export function useSettings() {
             <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-opacity="0.15" flood-color="${primaryCol}" />
           </filter>
         </defs>
-        <!-- Background rect shaped with user's border-radius settings -->
         <rect x="2" y="2" width="96" height="96" rx="${Math.max(6, radiusVal / 2.2)}" fill="${bgCol}" stroke="${primaryCol}" stroke-width="5" />
-        
-        <!-- Text MMV in custom Poppins typeface with subtle drop shadow -->
         <g filter="url(#shadow)">
           <text x="50%" y="54%" class="text-mmv" text-anchor="middle" dominant-baseline="middle">MMV</text>
         </g>
-        
-        <!-- Elegant dynamic corner badge/accent dot in primary theme color -->
         <circle cx="82" cy="34" r="4.5" fill="${primaryCol}" />
       </svg>
     `.trim().replace(/>\s+</g, '><');
@@ -144,7 +159,6 @@ export function useSettings() {
     const isDark = settings.theme_mode === "dark" || 
       (settings.theme_mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-    // List of custom design systems
     const presets: Record<string, {
       background: string;
       foreground: string;
@@ -184,6 +198,14 @@ export function useSettings() {
         border: isDark ? "240 6% 14%" : "240 10% 88%",
         muted: isDark ? "240 6% 11%" : "240 10% 92%",
         secondary: isDark ? "240 6% 11%" : "240 10% 92%"
+      },
+      mindora: {
+        background: isDark ? "201 20% 23%" : "165 17% 95%",
+        foreground: isDark ? "165 17% 95%" : "201 20% 23%",
+        card: isDark ? "201 20% 18%" : "0 0% 100%",
+        border: isDark ? "201 15% 30%" : "165 10% 88%",
+        muted: isDark ? "201 15% 30%" : "165 10% 92%",
+        secondary: isDark ? "201 20% 28%" : "210 57% 78%"
       }
     };
 
@@ -197,6 +219,16 @@ export function useSettings() {
       root.style.setProperty("--input", preset.border);
       root.style.setProperty("--muted", preset.muted);
       root.style.setProperty("--secondary", preset.secondary);
+      
+      if ((settings as any).theme_preset === "mindora") {
+        root.style.setProperty("--font-primary", '"DM Sans", sans-serif');
+        root.style.setProperty("--font-heading", '"Inter", sans-serif');
+        root.style.setProperty("--primary-foreground", "0 0% 100%");
+      } else {
+        root.style.setProperty("--font-primary", '"Poppins", sans-serif');
+        root.style.setProperty("--font-heading", '"Poppins", sans-serif');
+        root.style.removeProperty("--primary-foreground");
+      }
     } else {
       root.style.removeProperty("--background");
       root.style.removeProperty("--foreground");
@@ -206,6 +238,8 @@ export function useSettings() {
       root.style.removeProperty("--input");
       root.style.removeProperty("--muted");
       root.style.removeProperty("--secondary");
+      root.style.setProperty("--font-primary", '"Poppins", sans-serif');
+      root.style.setProperty("--font-heading", '"Poppins", sans-serif');
     }
   }, [settings.theme_mode, (settings as any).theme_preset]);
 
@@ -229,39 +263,41 @@ export function useSettings() {
     }
   }, [settings.theme_mode]);
 
-  async function loadSettings() {
+  async function loadSettingsForUser(user: any) {
+    const userStorageKey = user ? `mmv-settings-${user.uid}` : "mmv-settings";
     let localSettings = DEFAULT_SETTINGS;
+    
     try {
-      const stored = localStorage.getItem("mmv-settings");
+      const stored = localStorage.getItem(userStorageKey) || localStorage.getItem("mmv-settings");
       if (stored) {
         localSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
         setSettings(localSettings);
       }
     } catch (e) {}
 
-    // Race database operations against a 4-second timeout to prevent infinite hanging
-    const dbLoadPromise = (async () => {
+    if (!user) {
+      setSettingsId(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
       const list = await base44.entities.UserSettings.list();
       if (list && list.length > 0) {
         const dbSettings = { ...DEFAULT_SETTINGS, ...list[0] };
         setSettings(dbSettings);
         setSettingsId(list[0].id);
-        localStorage.setItem("mmv-settings", JSON.stringify(dbSettings));
+        localStorage.setItem(userStorageKey, JSON.stringify(dbSettings));
       } else {
-        // Logged in but no settings? Create them!
-        const created = await base44.entities.UserSettings.create(localSettings);
+        // First sign-in for this user: initialize Firestore userSettings doc
+        const created = await base44.entities.UserSettings.create({
+          ...localSettings,
+          userId: user.uid
+        });
         setSettingsId(created.id);
       }
-    })();
-
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Database load timed out")), 4000)
-    );
-
-    try {
-      await Promise.race([dbLoadPromise, timeoutPromise]);
     } catch (e) {
-      console.log("Database settings load timed out or failed, utilizing local settings fallback:", e);
+      console.error("Firestore settings load failed, using local cache:", e);
     } finally {
       setLoading(false);
     }
@@ -270,7 +306,8 @@ export function useSettings() {
   function updateSettings(updates: any) {
     setSettings(prev => {
       const next = { ...prev, ...updates };
-      localStorage.setItem("mmv-settings", JSON.stringify(next));
+      const storageKey = auth.currentUser ? `mmv-settings-${auth.currentUser.uid}` : "mmv-settings";
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
     setHasChanges(true);
@@ -281,9 +318,12 @@ export function useSettings() {
       setLoading(true);
       
       const payload = { ...settings };
-      // Remove id and user_id if they exist to prevent overriding
       delete payload.id;
-      delete payload.user_id;
+      delete (payload as any).user_id;
+
+      if (auth.currentUser) {
+        (payload as any).userId = auth.currentUser.uid;
+      }
 
       if (settingsId) {
         await base44.entities.UserSettings.update(settingsId, payload);
@@ -291,9 +331,13 @@ export function useSettings() {
         const created = await base44.entities.UserSettings.create(payload);
         setSettingsId(created.id);
       }
+      
+      const storageKey = auth.currentUser ? `mmv-settings-${auth.currentUser.uid}` : "mmv-settings";
+      localStorage.setItem(storageKey, JSON.stringify(payload));
       setHasChanges(false);
     } catch (e) {
-      console.error("Failed to save settings", e);
+      console.error("Failed to save settings to Firestore", e);
+      throw e;
     } finally {
       setLoading(false);
     }
@@ -301,3 +345,4 @@ export function useSettings() {
 
   return { settings, updateSettings, saveSettings, hasChanges, loading };
 }
+

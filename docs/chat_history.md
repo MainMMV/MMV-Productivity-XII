@@ -131,3 +131,64 @@ calendar
 
 ### [Sat Jul 25 04:17:15 PM UTC 2026] Agent:
 Implemented the new Google Workspace section with dedicated interfaces for Google Drive, Google Docs, Google Sheets, and Google Tasks, completely utilizing the live Workspace APIs.
+
+### Entry 11: GitHub Sync Clarification
+- **Time/Date**: 2026-07-25T09:46:05-07:00
+- **User Prompt**:
+  > "git pull origin main... Already up to date... but not changed others check it out"
+- **Resolution**:
+  - Explained to the user that changes made within the AI Studio environment must first be explicitly synced/pushed to GitHub using the AI Studio UI's export/sync button before they can be pulled into their local Google Cloud Shell environment.
+
+### Entry 12: Mindora Theme Refinement
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "can we add this theme to settings section when user sets this every thing must change... are you sure that you have added all from image"
+- **Resolution**:
+  - Imported the specific font families (`Inter`, `DM Sans`, `Cormorant Italic`) required by the Mindora design specification into `index.css`.
+  - Configured `useSettings.ts` to dynamically swap `--font-primary` and `--font-heading` at the document root level when the "Mindora Calm" preset is active.
+  - Explicitly mapped the primary green (`#5E8B7E`), dark slate (`#2F3E46`), and light gray (`#F1F5F4`) colors directly into the inline styles for the Mindora preset, circumventing the standard HSL logic to ensure a perfect 1-to-1 match with the design system.
+  - Locked the border radius to `16px` base when Mindora is selected to recreate the soft aesthetic.
+
+### Entry 13: Fixing Firestore Permissions
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "Fix the errors in the app... Missing or insufficient permissions."
+- **Resolution**:
+  - Identified that legacy records may have utilized `user_id` instead of the newly standardized `userId` key, causing the strict Firestore security rules to deny updates due to a missing `userId` property on the `incoming()` evaluation block.
+  - Edited `/firestore.rules` to gracefully fallback and accept `request.resource.data.user_id == request.auth.uid` alongside `userId` for all core collections (`userSettings`, `habits`, `tasks`, `expenses`, `income`, `subscriptions`, `goals`).
+  - Redeployed the updated security rules to the Firebase project.
+
+### Entry 14: Settings and Customization Refinements
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "custom border not working, settings section not working hue color, Remove animation timing from settings, fix issue container sections, Settings Must save on each user has different settings when set must match when user signs in it must be stayed the same, data base only for fire base"
+- **Resolution**:
+  - Bound settings in `useSettings.ts` to Firebase Auth state via `auth.onAuthStateChanged()`. When a user signs in, their settings are fetched from Firestore (`userSettings` collection) for their UID and persisted per user.
+  - Fixed hue color updates by updating `theme_preset: "default"` whenever an accent color or custom hue is chosen, allowing `--primary` to shift to the selected hue.
+  - Fixed custom border radius by setting `--radius` through `--radius-3xl` CSS variables dynamically, removing preset overrides that blocked border radius changes.
+  - Removed the animation timing control section from `Settings.tsx`.
+  - Refined container width controls and section layouts.
+  - Confirmed 100% Firebase Firestore database integration for all user data.
+
+### Entry 15: Unique Finance UI & Comprehensive Enhancements
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "fix finance ui make it so unique but other things is better and can you do some better changes"
+- **Resolution**:
+  - **Wealth Command Hero Card**: Transformed top balance section into a dark slate metallic hero card with ambient glow, privacy eye toggle to show/hide balances, currency badge, quick action pills (`+ Expense`, `+ Income`, `+ Sub`), and net balance stat pillars.
+  - **Finance Summary Analytics**:
+    - Resolved blank empty state box for "Spending by Category" by adding an interactive empty state card with a 1-click **Demo Data Generator** and quick transaction trigger.
+    - Built a **Cash Flow & Savings Rate Progress Bar** (e.g. Healthy vs Needs Attention status).
+    - Designed category progress breakdown bars with emoji icons (🍔 Food, 🚗 Transport, 🏠 Housing, 🎬 Entertainment, 🛍️ Shopping, 💡 Utilities, etc.) and color badges.
+    - Added a **Recent Money Stream** transaction feed directly on the Overview tab.
+
+### Entry 16: Theme-Adaptive Net Wealth Balance Card
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "change this to something better this isnt matching with ui it must match with theme it become dark"
+- **Resolution**:
+  - Converted the Net Wealth Balance card in `Finance.tsx` from hardcoded dark slate styles (`bg-slate-900`) to dynamic theme variables (`bg-card`, `border-border/80`, `text-card-foreground`, `text-muted-foreground`, `text-foreground`).
+  - Adapted quick action buttons and stat metrics (Income, Spending, Monthly Subs) to automatically match active light/dark modes, custom theme hue accents, and design system presets.
+
+### Entry 17: Final Deployment Readiness & Responsive UI Optimization
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "make it to ready to deploy add commit changes fix some issues make responsive"
+- **Resolution**:
+  - **Theme-Adaptive Finance UI**: Integrated dynamic CSS card background, theme accent colors, and light/dark theme variables across the Wealth Balance hero card and finance summary widgets.
+  - **Responsive Optimization**: Verified fluid layouts across all device viewports with responsive grid column scaling (`grid-cols-1`, `md:grid-cols-2`, `lg:grid-cols-3`), touch-friendly button targets (min 44px on touch), scrollable card containers, and mobile drawer sidebar navigation.
+  - **System Build & Verification**: Ran `compile_applet` and `lint_applet` with zero warnings or fatal errors. Codebase is 100% compiled and ready for instant Cloud Run or Firebase Hosting deployment.

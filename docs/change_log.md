@@ -143,3 +143,13 @@ This log provides a 100% truthful, comprehensive account of all code and structu
 - Created `GoogleDocs.tsx` to create Google Docs.
 - Created `GoogleSheets.tsx` to create Google Sheets.
 - Created `GoogleTasks.tsx` to manage Google Tasks directly from the app.
+-e 
+## Changes - Firestore Rules Fix
+- Modified `firestore.rules` to support `user_id` fallback in addition to `userId` for all entity validations. This fixes the 'Missing or insufficient permissions' errors when updating legacy records that did not contain the newer `userId` property.
+
+## Changes - User Settings & Firestore Sync
+- **Firebase Multi-User Settings Sync**: Subscribed `useSettings.ts` to `auth.onAuthStateChanged()`. Each user's settings are now stored and loaded from their own document in the Firestore `userSettings` collection.
+- **Hue Color Accent Fix**: Accent colors and custom hue inputs now seamlessly override presets so chosen theme colors take effect immediately.
+- **Custom Border Radius Fix**: Removed hardcoded preset overrides and applied dynamic CSS variables (`--radius`, `--radius-xl`, `--radius-2xl`, etc.) so the border slider changes elements live.
+- **Removed Animation Timing**: Cleaned up settings by removing the animation timing dropdown.
+- **Container Sections Fix**: Streamlined layout container width options (100% Full, 90%, 80%, 1280px Max, 1024px Compact).
