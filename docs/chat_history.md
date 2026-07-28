@@ -233,3 +233,12 @@ Implemented the new Google Workspace section with dedicated interfaces for Googl
 - **Resolution**:
   - Created executable `/deploy-git-firebase.sh` script to pull/clone `https://github.com/MainMMV/MMV-Productivity-XII.git`, install dependencies, build Vite assets, and publish directly to Firebase Hosting and Firestore Security Rules.
   - Updated `/docs/FIREBASE_DEPLOYMENT_GUIDE.md` with instructions for the script.
+
+### Entry 23: Navigation UI Design Upgrade & Firebase Sync
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "Can you make navigation ui similar like this when ready give me updated bash for this changes"
+- **Resolution**:
+  - Redesigned the navigation sidebar layout in `AppLayout.tsx` to match the requested reference UI.
+  - Implemented the top-right floating circular action button (`ChevronLeft` / `ChevronRight`) with smooth expand/collapse motion.
+  - Formatted navigation links with soft active highlight cards (`bg-primary/10 font-bold`), icon boxes on the left (`p-1.5 rounded-lg bg-primary/15`), right-aligned badge pill counters, and group accordion expand indicators (`ChevronDown`).
+  - Maintained complete responsiveness for desktop, tablet, and mobile views.
