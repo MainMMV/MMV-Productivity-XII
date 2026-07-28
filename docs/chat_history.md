@@ -192,3 +192,37 @@ Implemented the new Google Workspace section with dedicated interfaces for Googl
   - **Theme-Adaptive Finance UI**: Integrated dynamic CSS card background, theme accent colors, and light/dark theme variables across the Wealth Balance hero card and finance summary widgets.
   - **Responsive Optimization**: Verified fluid layouts across all device viewports with responsive grid column scaling (`grid-cols-1`, `md:grid-cols-2`, `lg:grid-cols-3`), touch-friendly button targets (min 44px on touch), scrollable card containers, and mobile drawer sidebar navigation.
   - **System Build & Verification**: Ran `compile_applet` and `lint_applet` with zero warnings or fatal errors. Codebase is 100% compiled and ready for instant Cloud Run or Firebase Hosting deployment.
+
+### Entry 18: Mobile APK Generation Documentation
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "now how can we turn this into mobile apk how to do that whis is repo for you https://github.com/MainMMV/MMV-Productivity-XII.git"
+- **Resolution**:
+  - Provided comprehensive step-by-step instructions for converting the web app into a native Android APK using **Capacitor** or **PWABuilder**.
+  - Documented local CLI build steps (`npx cap init`, `npx cap add android`, `npx cap sync`, `npx cap open android`).
+  - Created `README.md` and `/docs/MOBILE_APK_GUIDE.md` in the repository for developer reference.
+
+### Entry 19: Dedicated Native Android APK & GitHub Actions Guide
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "we dont need this pwa give me this responsive for apk mobile version as md file for ai studio fully detailed inside our file md file and do changes every time we do changes"
+- **Resolution**:
+  - Removed all PWA references from the codebase documentation.
+  - Created a dedicated, detailed native Android APK & mobile responsiveness guide in `/docs/MOBILE_APK_GUIDE.md`.
+  - Created `.github/workflows/build-apk.yml` so an installable `.apk` file is automatically compiled on GitHub Actions on every commit to `https://github.com/MainMMV/MMV-Productivity-XII.git`.
+  - Updated `README.md` to point directly to the native Android APK guide.
+
+### Entry 20: Firebase Deployment Script & Configuration
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "Let's do publish deploy update to firebase give bash for that"
+- **Resolution**:
+  - Deployed Firestore Security Rules to the active Firebase project (`ai-studio-mmvproductivitya-775dcb08-05ba-4085-aa0d-9459b11b99ba`).
+  - Added npm deployment scripts to `package.json` (`deploy:firebase`, `deploy:hosting`, `deploy:rules`).
+  - Created executable `/deploy.sh` bash script in the project root.
+  - Created `/docs/FIREBASE_DEPLOYMENT_GUIDE.md` with step-by-step terminal commands and GitHub CI/CD automation instructions.
+
+### Entry 21: GitHub Workflow Permission Fix
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "Fix this errors" (Error: Failed to push commit to GitHub, Insufficient permissions to push workflow files)
+- **Resolution**:
+  - Moved `.github/workflows/build-apk.yml` into `github-workflows-reference/build-apk.yml` and removed the `/.github` folder from the AI Studio repository tree.
+  - This resolves GitHub's restriction requiring elevated OAuth App permissions for workflow files during AI Studio commit pushes.
+  - Updated `/docs/MOBILE_APK_GUIDE.md` instructions.
