@@ -226,3 +226,10 @@ Implemented the new Google Workspace section with dedicated interfaces for Googl
   - Moved `.github/workflows/build-apk.yml` into `github-workflows-reference/build-apk.yml` and removed the `/.github` folder from the AI Studio repository tree.
   - This resolves GitHub's restriction requiring elevated OAuth App permissions for workflow files during AI Studio commit pushes.
   - Updated `/docs/MOBILE_APK_GUIDE.md` instructions.
+
+### Entry 22: GitHub Pull & Firebase Deploy Bash Script
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "Give bash for fire bas from git https://github.com/MainMMV/MMV-Productivity-XII.git It will pull this repo for that"
+- **Resolution**:
+  - Created executable `/deploy-git-firebase.sh` script to pull/clone `https://github.com/MainMMV/MMV-Productivity-XII.git`, install dependencies, build Vite assets, and publish directly to Firebase Hosting and Firestore Security Rules.
+  - Updated `/docs/FIREBASE_DEPLOYMENT_GUIDE.md` with instructions for the script.

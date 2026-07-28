@@ -6,14 +6,16 @@ This guide details how to publish, deploy, and update **MMV Productivity XII** o
 
 ## ⚡ Quick 1-Command Deployment
 
-We've included an automated bash deployment script `deploy.sh` in the project root:
-
+### Option A: Local Workspace Deployment
 ```bash
-# Make script executable (if needed)
-chmod +x deploy.sh
-
-# Run full deployment (Build + Firebase Hosting + Firestore Rules)
+# Run full local deployment (Build + Firebase Hosting + Firestore Rules)
 ./deploy.sh
+```
+
+### Option B: Clone/Pull from GitHub & Deploy to Firebase
+```bash
+# Pulls latest code from https://github.com/MainMMV/MMV-Productivity-XII.git, builds, & deploys to Firebase
+./deploy-git-firebase.sh
 ```
 
 Or using `npm` scripts:
