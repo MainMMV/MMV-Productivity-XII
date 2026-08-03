@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useSettings } from './useSettings';
 import { base44 } from '@/api/base44Client';
 import { playSound } from './sounds';
+import { sendTelegramNotification } from './telegramService';
 
 export function useNotifications() {
   const { settings } = useSettings();
@@ -189,6 +190,15 @@ export function useNotifications() {
 
   function sendNotification(title: string, body: string) {
     playSound("alarm");
+    
+    // Dispatch to Telegram Bot
+    sendTelegramNotification({
+      entity: 'Task',
+      action: 'Updated',
+      title: title,
+      details: body
+    });
+
     if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
       navigator.serviceWorker.ready.then(registration => {
         registration.showNotification(title, {

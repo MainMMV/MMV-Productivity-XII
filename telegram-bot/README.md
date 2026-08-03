@@ -1,90 +1,66 @@
-# 🤖 MMV Productivity Suite — Telegram Companion Bot & Mini App Integration
+# 🤖 MMV XII Productivity Suite — Python Telegram Companion Bot
 
-Deploy a stunning companion chatbot and immersive **Telegram Mini App (TMA)** experience. The chatbot and WebApp interact with your productive workspace seamlessly.
-
----
-
-## 🌟 Key Commands & Functionalities
-- **`/start`**: Welcome menu with quick command shortcuts and persistent **"💼 Open MMV Mini App"** button.
-- **`/help`**: Detailed command guide, examples, and user manual.
-- **`🌸 /habits`**: Lists active habit schedules and provides inline interactive ticking checkmarks to note daily completions.
-- **`🎯 /tasks`**: Manages checklists and milestones. Add tasks inline via `/addtask <title>` or complete them via tapping inline buttons.
-- **`➕ /addtask <title>`**: Quick-add a new task milestone directly from Telegram chat.
-- **`📊 /finance`**: Instantly calculates expense logs, revenue streams, and clean net balance. Log them anywhere anytime using `/addexpense <amount> <category> [note]` and `/addincome <amount> <source> [note]`.
-- **`💸 /addexpense <amount> <category> [note]`**: Log costs into your ledger.
-- **`💰 /addincome <amount> <source> [note]`**: Log earnings into your ledger.
-- **`📈 /goals`**: Draws beautiful progress sliders for target savings achievements with actual balance tallies.
+Full Python implementation for the MMV XII companion bot with security code verification (`9309`) and real-time Web App change notifications.
 
 ---
 
-## 🚀 Deployment Options
+## 🌟 Features & Capabilities
 
-### Option A: Firebase Cloud Functions / Cloud Run (Recommended for Serverless)
+1. **🔒 Security Registration Flow (Code `9309`)**:
+   - On `/start`, the bot prompts the user: `enter code: ...`
+   - Only when the user inputs `9309`, access is granted and their `chat_id` is registered in `authorized_users.json`.
+   - Unregistered users are blocked from running commands or receiving notifications.
 
-You can host your Telegram Bot Webhook on Firebase Cloud Functions or Google Cloud Run for 24/7 reliability and auto-scaling.
+2. **📲 Real-time Web App Event Notifications**:
+   - Web changes (creating/updating/deleting Tasks, Notes, Finances, Habits, Goals, Subscriptions) trigger instant notifications containing detailed item titles and metadata directly to Telegram.
 
-#### 1. Setup Firebase CLI
-```bash
-npm install -g firebase-tools
-firebase login
-```
-
-#### 2. Deploy Webhook to Cloud Run / Cloud Functions
-Using Google Cloud Run (free tier included with 2 million requests/month):
-```bash
-cd telegram-bot
-npm install
-npm run build
-
-# Deploy container directly to Cloud Run
-gcloud run deploy mmv-telegram-bot \
-  --source . \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN",TELEGRAM_WEBHOOK_DOMAIN="https://your-cloud-run-url.a.run.app"
-```
-
-#### 3. Register Webhook with Telegram
-Once deployed, register your webhook with Telegram by visiting:
-```text
-https://YOUR_CLOUD_RUN_URL/setup-webhook
-```
-Or manually run:
-```bash
-curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://YOUR_CLOUD_RUN_URL/webhook/<YOUR_BOT_TOKEN>"
-```
+3. **🎯 Interactive Bot Commands**:
+   - `/start` — Check authorization status or request code `9309`
+   - `/help` — View full user manual
+   - `/status` — View device registration & authorized users count
+   - `/tasks` — View active tasks
+   - `/addtask <title>` — Add a new task
+   - `/habits` — Daily habit checklist & streak progress
+   - `/finance` — Summary of income, expenses, and net balance
+   - `/addexpense <amount> <category> [note]` — Log expense
+   - `/addincome <amount> <source> [note]` — Log income
+   - `/goals` — Check milestone progress
 
 ---
 
-### Option B: Node.js Long-Polling (VPS / Local Server)
+## 🚀 How to Run the Python Bot
 
-Run the bot on any server or local terminal using long-polling:
-
+### 1. Install Dependencies
 ```bash
 cd telegram-bot
-npm install
-npm run dev
+pip install -r requirements.txt
 ```
+
+### 2. Set Environment Variables (Optional)
+Create a `.env` file or export environment variables:
+```bash
+export TELEGRAM_BOT_TOKEN="8430563840:AAGj9vAUe6Kx7inbWklfy8xUrFF7NeDfHRo"
+export PORT=5000
+```
+
+### 3. Start the Bot
+```bash
+python bot.py
+```
+*(Or `python3 bot.py`)*
 
 ---
 
-## ⚙️ Environment Variables Reference
+## 🔒 Registration & Code Verification
 
-Create a `.env` file inside `telegram-bot/`:
-
-```env
-TELEGRAM_BOT_TOKEN="YOUR_BOT_TOKEN_FROM_BOTFATHER"
-TELEGRAM_WEBAPP_URL="https://your-app.web.app"
-TELEGRAM_WEBHOOK_DOMAIN="https://your-webhook-domain.a.run.app"
-TELEGRAM_WEBHOOK_SECRET_TOKEN="your_random_secret_token"
-```
-
----
-
-## 🤖 Registering with `@BotFather`
-1. Open Telegram and search for [@BotFather](https://t.me/BotFather).
-2. Send `/newbot` and follow the prompts to create your bot.
-3. Copy your **HTTP API Token**.
-4. Set up the WebApp menu button:
-   - Send `/newapp` -> Select your bot -> Enter WebApp URL.
-   - Send `/setmenubutton` -> Select your bot -> Attach WebApp link.
+1. Open Telegram and start your bot: `@YourBot`
+2. Send `/start`. The bot will ask:
+   ```text
+   enter code: ...
+   ```
+3. Type `9309` and press send.
+4. The bot responds:
+   ```text
+   ✅ Access Granted! Code 9309 Verified.
+   Welcome! Real-time notifications for Web App changes are active.
+   ```

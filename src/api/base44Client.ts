@@ -1,7 +1,28 @@
 import { db, auth } from '@/lib/firebase';
 import { collection, doc, getDocs, getDoc, query, where, orderBy as fsOrderBy, limit as fsLimit, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { sendTelegramNotification } from '@/lib/telegramService';
 
 let isAuthenticated = false;
+
+function notifyTelegramForEntity(tableName: string, action: 'Created' | 'Updated' | 'Deleted', payload: any) {
+  if (tableName === 'userSettings') return;
+  const entityName = (tableName.charAt(0).toUpperCase() + tableName.slice(1)).replace(/s$/, '');
+  const title = payload?.title || payload?.name || payload?.category || payload?.source || payload?.id || 'Workspace Item';
+  const detailsParts = [];
+  if (payload?.priority) detailsParts.push(`Priority: ${payload.priority}`);
+  if (payload?.status) detailsParts.push(`Status: ${payload.status}`);
+  if (payload?.due_date) detailsParts.push(`Due: ${payload.due_date}`);
+  if (payload?.amount) detailsParts.push(`Amount: $${payload.amount}`);
+  if (payload?.category) detailsParts.push(`Category: ${payload.category}`);
+  if (payload?.source) detailsParts.push(`Source: ${payload.source}`);
+
+  sendTelegramNotification({
+    entity: entityName as any,
+    action,
+    title,
+    details: detailsParts.join(' | ') || undefined,
+  });
+}
 
 export const setAuthState = (isAuth: boolean) => {
   isAuthenticated = isAuth;
@@ -73,52 +94,59 @@ function createEntity(tableName: string) {
       }
     },
     create: async (payload: any) => {
+      let resItem: any;
       if (!auth.currentUser) {
         const list = getLocalList(tableName);
         const id = crypto.randomUUID?.() || Date.now().toString();
-        const newItem = { id, created_at: new Date().toISOString(), ...payload };
-        saveLocalList(tableName, [...list, newItem]);
-        return newItem;
+        resItem = { id, created_at: new Date().toISOString(), ...payload };
+        saveLocalList(tableName, [...list, resItem]);
+      } else {
+        try {
+          const enhancedPayload = {
+            ...payload,
+            userId: auth.currentUser.uid,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          const docRef = await addDoc(collection(db, tableName), enhancedPayload);
+          resItem = { id: docRef.id, ...enhancedPayload };
+        } catch (error) {
+          console.error(`Error in create ${tableName}:`, error);
+          throw error;
+        }
       }
-      
-      try {
-        const enhancedPayload = {
-          ...payload,
-          userId: auth.currentUser.uid,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        const docRef = await addDoc(collection(db, tableName), enhancedPayload);
-        return { id: docRef.id, ...enhancedPayload };
-      } catch (error) {
-        console.error(`Error in create ${tableName}:`, error);
-        throw error;
-      }
+      notifyTelegramForEntity(tableName, 'Created', resItem);
+      return resItem;
     },
     update: async (id: string, diff: any) => {
+      let updatedItem: any;
       if (!auth.currentUser) {
         const list = getLocalList(tableName);
         const idx = list.findIndex((i: any) => i.id === id);
         if (idx !== -1) {
           list[idx] = { ...list[idx], ...diff, updated_at: new Date().toISOString() };
           saveLocalList(tableName, list);
-          return list[idx];
+          updatedItem = list[idx];
+        } else {
+          throw new Error("Not found locally");
         }
-        throw new Error("Not found locally");
+      } else {
+        try {
+          const docRef = doc(db, tableName, id);
+          const enhancedDiff = { ...diff, updated_at: new Date().toISOString() };
+          await updateDoc(docRef, enhancedDiff);
+          const updatedDoc = await getDoc(docRef);
+          updatedItem = { id: updatedDoc.id, ...updatedDoc.data() };
+        } catch (error) {
+          console.error(`Error in update ${tableName}:`, error);
+          throw error;
+        }
       }
-      
-      try {
-        const docRef = doc(db, tableName, id);
-        const enhancedDiff = { ...diff, updated_at: new Date().toISOString() };
-        await updateDoc(docRef, enhancedDiff);
-        const updatedDoc = await getDoc(docRef);
-        return { id: updatedDoc.id, ...updatedDoc.data() };
-      } catch (error) {
-        console.error(`Error in update ${tableName}:`, error);
-        throw error;
-      }
+      notifyTelegramForEntity(tableName, 'Updated', updatedItem);
+      return updatedItem;
     },
     delete: async (id: string) => {
+      notifyTelegramForEntity(tableName, 'Deleted', { id });
       if (!auth.currentUser) {
         const list = getLocalList(tableName);
         saveLocalList(tableName, list.filter((i: any) => i.id !== id));

@@ -266,3 +266,52 @@ Implemented the new Google Workspace section with dedicated interfaces for Googl
 - **Resolution**:
   - Removed the `PWA` badge text from the navigation sidebar header (`AppLayout.tsx`).
   - Updated the dynamic SVG favicon corner radius formula (`rx="${Math.round((radiusVal / 100) * 48)}"`) in `useSettings.ts`. Whenever the user adjusts the border radius setting (0% sharp square to 100% full pill/circle), the dynamic favicon and touch icon instantly update their corner radius in real time.
+
+### Entry 27: Full Python Telegram Bot Integration with Security Code 9309 & Web Change Dispatch
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "build up telegram bot integration dont change any thing from page only build telegram bot .py full moreeeeeeee details and i want in bot must be wen i change something from web must send to telegram bot like added this task with details telegram bot registration must be like this only i know the code and code is 9309 how that work telegram bot only works when i send this code after start telegram requests for code enter code: ..."
+- **Resolution**:
+  - Preserved 100% of the web UI pages and visual layouts without making any visible page modifications.
+  - Implemented `telegram-bot/bot.py` using Python with complete registration code verification (`9309`).
+  - Added access gate logic: `/start` prompts for `enter code: ...`. Sending `9309` grants access, registers the user's `chat_id` into `authorized_users.json`, and unlocks all bot commands.
+  - Built real-time Web notification dispatcher in `src/lib/telegramService.ts` hooked into `src/api/base44Client.ts` CRUD handlers (`create`, `update`, `delete`). Any web changes (adding/editing tasks, notes, finances, habits, goals) dispatch detailed notification messages to Telegram.
+  - Integrated a background HTTP webhook listener inside `bot.py` (running on port `5000` / `/notify`) to receive and broadcast web updates to all authorized Telegram chat IDs.
+
+### Entry 28: Firebase Hosting Webhook Integration (https://mmv-xii.web.app)
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "can we do webhook on firebase like hosting on it this is link for hosting https://mmv-xii.web.app/ i know it can handle it"
+- **Resolution**:
+  - Integrated `https://mmv-xii.web.app/api/notify` as a primary webhook target in `src/lib/telegramService.ts`.
+  - Configured real-time event dispatches for web changes directly pointing to `https://mmv-xii.web.app/` endpoints alongside direct Telegram Bot API fallback (`/sendMessage`).
+
+### Entry 29: Updated Git Repository URL for Firebase Hosting Deployment
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "If you haven't cloned the repo yet in Cloud Shell: git clone https://github.com/MainMMV/Uztrade2026.git ... change hostings to that ... https://mmv-xii.web.app/"
+- **Resolution**:
+  - Updated `deploy-git-firebase.sh` to target `https://github.com/MainMMV/Uztrade2026.git` and directory `Uztrade2026`.
+  - Updated `/docs/FIREBASE_DEPLOYMENT_GUIDE.md` references.
+  - Confirmed `.firebaserc` targets default project `mmv-xii`.
+
+### Entry 30: Cloud Shell Hosting Deployment Command Update
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "no no you didnt understand this its mmv-xii project this is hosting https://mmv-xii.web.app/ link and change comand to that so make it ready command for hosting bash this is link for git https://github.com/MainMMV/MMV-Productivity-XII.git"
+- **Resolution**:
+  - Reverted repository URL to `https://github.com/MainMMV/MMV-Productivity-XII.git` and project directory to `MMV-Productivity-XII`.
+  - Provided exact copy-paste Cloud Shell commands targeting `mmv-xii` Firebase Hosting (`https://mmv-xii.web.app/`).
+
+### Entry 31: Daily 10:00 AM Reminder Scheduler & Task Deadline Triggers
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "anything elese for telegram bot hosting like triggerts or something remainding from telegram for deadline tasks or habits every day on that day if user added time and every days remainder at 10 am must work telegram bot hosting and web hosting also doing triggers"
+- **Resolution**:
+  - Added background thread `start_reminder_scheduler()` in `telegram-bot/bot.py` that runs every 30s.
+  - Automatically sends a daily 10:00 AM Morning Brief to all authorized Telegram users detailing daily pending habits and tasks due today with streak metrics.
+  - Connected Web App notification engine (`useNotifications.ts`) to `sendTelegramNotification()` so specific task deadline times, upcoming task advance alerts, and missed habit reminders trigger Telegram alerts in real time across both web and Telegram bot hosting.
+
+### Entry 32: Telegram Bot Interactive Settings Menu & Dynamic Visual Theme Previews
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "make this settings section integration to telegram fully copy of that if you can add inline buttons with images sendings preview of how settings would change on click inline buttons user can type as text or as numbers between how much that can be etc"
+- **Resolution**:
+  - Implemented `/settings` command and interactive inline menus in `telegram-bot/bot.py`.
+  - Added inline keyboards for Dark/Light mode toggles, Presets (Slate, Sand, Mint, Obsidian, Mindora), Primary Accent Hue (0°-360°), Corner Border Radius (0%-100%), Currencies (USD, UZS, EUR, GBP, RUB), and Notification Alert toggles.
+  - Implemented Pillow (`PIL`) image generator `generate_theme_preview_image()` that dynamically draws 640x420 PNG preview cards depicting the UI workspace, active preset colors, dark/light canvas, accent hue buttons, rounded corner radii, and task/balance UI components.
+  - Added direct text/number input parser enabling users to adjust settings by typing preset names (`mint`, `obsidian`, `dark`, `light`), explicit values (`hue 260`, `radius 50`, `50%`), or standalone numbers (0–100 for border radius, 101–360 for hue angle) with automatic instant visual preview image response (`bot.send_photo`).
