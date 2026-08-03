@@ -114,10 +114,9 @@ export default function AppLayout() {
             {!isCollapsed && (
               <div className="flex flex-col">
                 <h1 className="text-sm font-bold tracking-tight text-foreground flex items-center gap-1">
-                  <span>MMV Hub</span>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-primary/10 text-primary font-mono rounded-full">v12</span>
+                  <span>MMV XII</span>
                 </h1>
-                <p className="text-[10px] text-muted-foreground font-medium">Workspace & Finance</p>
+                <p className="text-[10px] text-muted-foreground font-medium">Workspace & Finance Suite</p>
               </div>
             )}
           </div>
@@ -241,10 +240,8 @@ export default function AppLayout() {
               <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <div>
-                    <h1 className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 flex items-center gap-1.5">
-                      <span className="font-black">MMV</span>
-                      <span className="font-light text-muted-foreground text-sm">|</span>
-                      <span className="font-bold text-sm">Menu</span>
+                    <h1 className="text-lg bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 flex items-center gap-1.5 font-black">
+                      <span>MMV XII</span>
                     </h1>
                   </div>
                 </div>

@@ -249,3 +249,20 @@ Implemented the new Google Workspace section with dedicated interfaces for Googl
 - **Resolution**:
   - Generated `/docs/blueprint.md` detailing the tech stack (React, Vite, Capacitor, Firebase), Apple iOS UI guidelines, color palette usage, modular navigation layout structure, and Firestore sync architecture.
   - Generated `/docs/features.md` extensively covering every module based on the UI navigation (Dashboard, Productivity, Workspace, System & Settings) and drilling down into the exact functionality expected within each view.
+
+### Entry 25: MMV XII PWA Upgrade & Dynamic Favicon/Theme Integration
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "lets make pwa of web app make it so much better that must change when user changes style as favicon changes on pwa must change also and make title to MMV XII"
+- **Resolution**:
+  - Updated title to `MMV XII` across `index.html`, `metadata.json`, `manifest.json`, and UI layout navigation components.
+  - Upgraded PWA web manifest (`/public/manifest.json`) with standalone display mode, orientation settings, theme colors, and category declarations.
+  - Implemented real-time dynamic SVG favicon and apple-touch-icon generation in `useSettings.ts`, updating text ("MMV XII"), accent color, stroke, and border radius on every theme mode or preset switch.
+  - Dynamically updated `<meta name="theme-color">` on theme changes so mobile status bar/PWA header color adapts seamlessly.
+  - Enhanced `/public/sw.js` with offline static asset caching (stale-while-revalidate) and network-first navigation support.
+
+### Entry 26: PWA Label Removal & Dynamic Border Radius Favicon Sync
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "remove word pwa and when also user changes borders must change from favicon also for pwa icon"
+- **Resolution**:
+  - Removed the `PWA` badge text from the navigation sidebar header (`AppLayout.tsx`).
+  - Updated the dynamic SVG favicon corner radius formula (`rx="${Math.round((radiusVal / 100) * 48)}"`) in `useSettings.ts`. Whenever the user adjusts the border radius setting (0% sharp square to 100% full pill/circle), the dynamic favicon and touch icon instantly update their corner radius in real time.

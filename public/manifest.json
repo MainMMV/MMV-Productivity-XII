@@ -1,12 +1,13 @@
 {
-  "name": "MMV Productivity",
-  "short_name": "MMV",
-  "description": "A comprehensive productivity suite with habits, tasks, finance, and goal tracking.",
+  "name": "MMV XII",
+  "short_name": "MMV XII",
+  "description": "MMV XII — Comprehensive productivity suite with habits, tasks, finance, and goal tracking.",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#090d16",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "categories": ["productivity", "finance", "utilities"],
   "icons": [
     {
       "src": "/favicon.ico",
@@ -33,7 +34,7 @@
     {
       "name": "Goals",
       "url": "/goals",
-      "description": "Goal goals tracker"
+      "description": "Goals & milestones"
     }
   ]
 }

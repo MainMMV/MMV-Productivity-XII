@@ -101,31 +101,52 @@ export function useSettings() {
 
     const preset = presets[(settings as any).theme_preset || "slate"] || presets.slate;
     const bgCol = `hsl(${preset.card})`;
+    const bgAppCol = `hsl(${preset.background})`;
     const primaryCol = `hsl(${hue}, 90%, 60%)`;
     const textCol = isDark ? `hsl(${hue}, 95%, 72%)` : `hsl(${hue}, 90%, 48%)`;
     
+    // Dynamically update PWA & Mobile browser status bar theme color
+    const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
+    if (themeMetas.length > 0) {
+      themeMetas.forEach(meta => meta.setAttribute('content', bgAppCol));
+    } else {
+      const meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      meta.setAttribute('content', bgAppCol);
+      document.head.appendChild(meta);
+    }
+
+    // Dynamic MMV XII SVG icon matching theme colors & border radius
     const svg = `
       <svg width="256" height="256" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&amp;display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800;900&amp;display=swap');
             .text-mmv {
               font-family: 'Poppins', sans-serif;
-              font-weight: 800;
-              font-size: 32px;
+              font-weight: 900;
+              font-size: 24px;
               fill: ${textCol};
-              letter-spacing: -1px;
+              letter-spacing: -0.5px;
+            }
+            .text-badge {
+              font-family: 'Poppins', sans-serif;
+              font-weight: 800;
+              font-size: 11px;
+              fill: ${primaryCol};
+              letter-spacing: 1px;
             }
           </style>
           <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-opacity="0.15" flood-color="${primaryCol}" />
+            <feDropShadow dx="0" dy="1.5" stdDeviation="1" flood-opacity="0.2" flood-color="${primaryCol}" />
           </filter>
         </defs>
-        <rect x="2" y="2" width="96" height="96" rx="${Math.max(6, radiusVal / 2.2)}" fill="${bgCol}" stroke="${primaryCol}" stroke-width="5" />
+        <rect x="2" y="2" width="96" height="96" rx="${Math.round((radiusVal / 100) * 48)}" fill="${bgCol}" stroke="${primaryCol}" stroke-width="4.5" />
         <g filter="url(#shadow)">
-          <text x="50%" y="54%" class="text-mmv" text-anchor="middle" dominant-baseline="middle">MMV</text>
+          <text x="50%" y="46%" class="text-mmv" text-anchor="middle" dominant-baseline="middle">MMV</text>
+          <text x="50%" y="72%" class="text-badge" text-anchor="middle" dominant-baseline="middle">XII</text>
         </g>
-        <circle cx="82" cy="34" r="4.5" fill="${primaryCol}" />
+        <circle cx="82" cy="22" r="4.5" fill="${primaryCol}" />
       </svg>
     `.trim().replace(/>\s+</g, '><');
 

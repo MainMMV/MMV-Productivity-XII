@@ -1,5 +1,5 @@
 {
-  "name": "MMV Productivity app XII",
+  "name": "MMV XII",
   "description": "A comprehensive productivity suite with habits, tasks, finance, and goal tracking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
