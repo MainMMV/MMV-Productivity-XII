@@ -831,7 +831,8 @@ if __name__ == "__main__":
     # Remove any existing Telegram Webhook to allow clean Long Polling
     try:
         print("🧹 Clearing old Telegram webhooks...")
-        bot.remove_webhook()
+        bot.remove_webhook(drop_pending_updates=True)
+        time.sleep(1)
     except Exception as e:
         print(f"Notice on remove_webhook: {e}")
 

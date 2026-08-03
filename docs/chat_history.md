@@ -322,3 +322,11 @@ Implemented the new Google Workspace section with dedicated interfaces for Googl
 - **Resolution**:
   - Added `bot.remove_webhook()` automatically upon bot startup in `telegram-bot/bot.py`.
   - Clears any existing Telegram webhooks registered on the bot token before initializing long polling (`infinity_polling`), resolving the HTTP 409 Conflict error seamlessly.
+
+### Entry 34: Added drop_pending_updates=True to bot.remove_webhook()
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 409. Description: Conflict: can't use getUpdates method while webhook is active; use deleteWebhook to delete the webhook first"
+- **Resolution**:
+  - Updated `bot.remove_webhook(drop_pending_updates=True)` in `telegram-bot/bot.py`.
+  - Added a brief 1-second delay before long polling begins to ensure Telegram's backend webhook registration is fully deregistered prior to `infinity_polling()`.
+  - Clarified Cloud Shell launch directory navigation to prevent reading log files from nested directories.
