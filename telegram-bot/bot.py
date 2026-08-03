@@ -828,6 +828,13 @@ if __name__ == "__main__":
     scheduler_thread = threading.Thread(target=start_reminder_scheduler, daemon=True)
     scheduler_thread.start()
 
+    # Remove any existing Telegram Webhook to allow clean Long Polling
+    try:
+        print("🧹 Clearing old Telegram webhooks...")
+        bot.remove_webhook()
+    except Exception as e:
+        print(f"Notice on remove_webhook: {e}")
+
     # Start Telegram Long Polling
     while True:
         try:

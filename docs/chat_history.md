@@ -315,3 +315,10 @@ Implemented the new Google Workspace section with dedicated interfaces for Googl
   - Added inline keyboards for Dark/Light mode toggles, Presets (Slate, Sand, Mint, Obsidian, Mindora), Primary Accent Hue (0°-360°), Corner Border Radius (0%-100%), Currencies (USD, UZS, EUR, GBP, RUB), and Notification Alert toggles.
   - Implemented Pillow (`PIL`) image generator `generate_theme_preview_image()` that dynamically draws 640x420 PNG preview cards depicting the UI workspace, active preset colors, dark/light canvas, accent hue buttons, rounded corner radii, and task/balance UI components.
   - Added direct text/number input parser enabling users to adjust settings by typing preset names (`mint`, `obsidian`, `dark`, `light`), explicit values (`hue 260`, `radius 50`, `50%`), or standalone numbers (0–100 for border radius, 101–360 for hue angle) with automatic instant visual preview image response (`bot.send_photo`).
+
+### Entry 33: Fixed Telegram Bot Webhook Conflict Error 409
+- **Time/Date**: $(date -Iseconds)
+- **User Prompt**: "telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 409. Description: Conflict: can't use getUpdates method while webhook is active; use deleteWebhook to delete the webhook first"
+- **Resolution**:
+  - Added `bot.remove_webhook()` automatically upon bot startup in `telegram-bot/bot.py`.
+  - Clears any existing Telegram webhooks registered on the bot token before initializing long polling (`infinity_polling`), resolving the HTTP 409 Conflict error seamlessly.
